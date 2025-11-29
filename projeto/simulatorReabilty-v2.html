@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<title>ExoRehab 3D — Simulador de Exoesqueleto para Fisioterapia</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  
+  :root { 
+    --bg:#0a0e1a; 
+    --panel:#0f172a88; 
+    --accent:#6366f1; 
+    --accent-hover:#4f46e5;
+    --success:#10b981;
+    --warning:#f59e0b;
+    --danger:#ef4444;
+    --muted:#94a3b8; 
+    --card:#0f172add; 
+    --border:rgba(255,255,255,0.06);
+  }
+  
+  * { box-sizing: border-box; }
+  
+  body { 
+    margin:0; 
+    font-family: 'Inter', system-ui, Arial; 
+    background: linear-gradient(135deg, #0a0e1a 0%, #1e1b4b 100%);
+    color:#e6eef8; 
+    overflow:hidden; 
+  }
+  
+  /* Canvas 3D */
+  canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+  }
+  
+  #ui { 
+    position: absolute; 
+    left:16px; 
+    top:16px; 
+    width:380px; 
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    padding:20px; 
+    border-radius:16px; 
+    background:linear-gradient(180deg,rgba(15,23,42,0.95),rgba(7,16,37,0.98)); 
+    border:1px solid var(--border); 
+    backdrop-filter: blur(12px); 
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    z-index:10;
+    transition: all 0.3s ease;
+  }
+  
+  #ui:hover {
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  }
+  
+  #ui h2 { 
+    margin:0 0 8px 0; 
+    font-size:20px;
+    font-weight:700;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .subtitle {
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:16px;
+    font-weight:500;
+  }
+  
+  .section {
+    background: rgba(15,23,42,0.5);
+    padding:12px;
+    border-radius:10px;
+    margin-bottom:12px;
+    border:1px solid rgba(255,255,255,0.03);
+  }
+  
+  .section-title {
+    font-size:11px;
+    font-weight:600;
+    color:#a5b4fc;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    margin-bottom:10px;
+  }
+  
+  label {
+    display:block; 
+    font-size:12px; 
+    color:var(--muted); 
+    margin-bottom:6px;
+    font-weight:500;
+  }
+  
+  .row {
+    display:flex; 
+    gap:8px; 
+    align-items:center; 
+    margin-bottom:10px;
+  }
+  
+  .col { flex:1; }
+  
+  input[type="range"] {
+    width:100%;
+    height:6px;
+    border-radius:3px;
+    background: linear-gradient(to right, var(--accent), var(--accent-hover));
+    outline:none;
+    opacity:0.8;
+    transition:opacity 0.2s;
+  }
+  
+  input[type="range"]:hover {
+    opacity:1;
+  }
+  
+  select, button, input[type="checkbox"] {
+    padding:8px 12px; 
+    border-radius:8px; 
+    border:none;
+    font-size:13px;
+    font-weight:500;
+    transition: all 0.2s ease;
+  }
+  
+  select {
+    background: rgba(30,41,59,0.8);
+    color:#e6eef8;
+    cursor:pointer;
+    width:100%;
+    border:1px solid rgba(255,255,255,0.1);
+  }
+  
+  select:hover {
+    background: rgba(30,41,59,1);
+    border-color:rgba(255,255,255,0.2);
+  }
+  
+  button {
+    cursor:pointer; 
+    font-weight:600; 
+    background:var(--accent); 
+    color:white;
+    border:none;
+    position:relative;
+    overflow:hidden;
+  }
+  
+  button:hover:not(:disabled) {
+    background:var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99,102,241,0.4);
+  }
+  
+  button:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  
+  button:disabled {
+    opacity:0.5;
+    cursor:not-allowed;
+  }
+  
+  button.secondary {
+    background:#334155;
+  }
+  
+  button.secondary:hover:not(:disabled) {
+    background:#475569;
+  }
+  
+  #exportBtn {
+    background:var(--success);
+    width:100%;
+  }
+  
+  #exportBtn:hover {
+    background:#059669;
+    box-shadow: 0 4px 12px rgba(16,185,129,0.4);
+  }
+  
+  #info {
+    position:absolute; 
+    right:16px; 
+    top:16px; 
+    width:240px; 
+    padding:16px; 
+    border-radius:16px; 
+    background:rgba(15,23,42,0.95); 
+    border:1px solid var(--border); 
+    font-size:13px; 
+    z-index:9;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  
+  #info > div {
+    padding:6px 0;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+  }
+  
+  #info > div:last-child {
+    border-bottom:none;
+  }
+  
+  .info-label {
+    color:var(--muted);
+    font-size:11px;
+    font-weight:500;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+  }
+  
+  .info-value {
+    color:#e6eef8;
+    font-size:16px;
+    font-weight:600;
+    margin-top:2px;
+  }
+  
+  .small-note {
+    font-size:11px; 
+    color:var(--muted); 
+    margin-top:8px;
+    line-height:1.5;
+  }
+  
+  .badge {
+    display:inline-block;
+    padding:4px 8px;
+    border-radius:6px;
+    font-size:11px;
+    font-weight:600;
+    background:rgba(99,102,241,0.2);
+    color:#a5b4fc;
+    margin-left:8px;
+  }
+  
+  .badge.success {
+    background:rgba(16,185,129,0.2);
+    color:#6ee7b7;
+  }
+  
+  .loading-indicator {
+    display:none;
+    text-align:center;
+    padding:8px;
+    color:var(--accent);
+    font-size:12px;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  
+  .loading-indicator.active {
+    display:block;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity:1; }
+    50% { opacity:0.5; }
+  }
+  
+  .therapy-info {
+    background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(99,102,241,0.1));
+    padding:12px;
+    border-radius:10px;
+    font-size:11px;
+    line-height:1.6;
+    color:#cbd5e1;
+    border:1px solid rgba(16,185,129,0.2);
+    margin-top:12px;
+  }
+  
+  .value-display {
+    background:rgba(99,102,241,0.15);
+    padding:4px 8px;
+    border-radius:6px;
+    text-align:center;
+    font-weight:600;
+    color:#a5b4fc;
+    min-width:64px;
+  }
+</style>
+</head>
+<body>
+  <div id="ui">
+    <h2>ExoRehab 3D</h2>
+    <div class="subtitle">Simulador de Exoesqueleto para Fisioterapia</div>
+
+    <div class="section">
+      <div class="section-title">Tipo de Exoesqueleto</div>
+      <select id="exoType">
+        <option value="arm">Braço (Reabilitação de Membro Superior)</option>
+        <option value="leg">Perna (Reabilitação de Marcha)</option>
+      </select>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Algoritmo de Planejamento</div>
+      <select id="mode">
+        <option value="astar">A* (Otimizado com Desvio de Obstáculos)</option>
+        <option value="interp">Interpolação Linear Simples</option>
+      </select>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Posição Inicial <span class="badge">Repouso</span></div>
+      <div class="row">
+        <div class="col">
+          <label id="label_t1i">θ1 (Ombro/Quadril)</label>
+          <input id="t1i" type="range" min="0" max="180" step="1" value="20">
+        </div>
+        <div class="value-display" id="t1i_val">20°</div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <label id="label_t2i">θ2 (Cotovelo/Joelho)</label>
+          <input id="t2i" type="range" min="-145" max="0" step="1" value="-20">
+        </div>
+        <div class="value-display" id="t2i_val">-20°</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Posição Final <span class="badge success">Objetivo</span></div>
+      <div class="row">
+        <div class="col">
+          <label id="label_t1f">θ1 (Ombro/Quadril)</label>
+          <input id="t1f" type="range" min="0" max="180" step="1" value="100">
+        </div>
+        <div class="value-display" id="t1f_val">100°</div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <label id="label_t2f">θ2 (Cotovelo/Joelho)</label>
+          <input id="t2f" type="range" min="-145" max="0" step="1" value="30">
+        </div>
+        <div class="value-display" id="t2f_val">30°</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Controles</div>
+      <div class="row">
+        <div class="col">
+          <label>Velocidade da Simulação</label>
+          <input id="speed" type="range" min="10" max="200" step="5" value="35">
+        </div>
+        <div class="value-display" id="speed_val">35ms</div>
+      </div>
+      
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        <button id="btnSim" style="flex:2;">▶ Simular Movimento</button>
+        <button id="btnPause" class="secondary" style="flex:1;">⏸</button>
+        <button id="btnReset" class="secondary" style="flex:1;">🔄</button>
+      </div>
+      
+      <div class="loading-indicator" id="loadingIndicator">
+        Planejando trajetória com A*...
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Visualização</div>
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <label style="display:flex;align-items:center;gap:6px; cursor:pointer;">
+          <input id="cbObstacle" type="checkbox" checked style="cursor:pointer;"> 
+          <span style="font-size:12px;">Obstáculos</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:6px; cursor:pointer;">
+          <input id="cbGrid" type="checkbox" checked style="cursor:pointer;"> 
+          <span style="font-size:12px;">Grade</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="section">
+      <button id="exportBtn">⤓ Exportar Trajetória (CSV)</button>
+    </div>
+
+    <div class="therapy-info">
+      <strong>💡 Sobre o Simulador:</strong><br>
+      Este sistema utiliza o algoritmo A* para planejar trajetórias otimizadas de movimento, considerando limitações biomecânicas e obstáculos. Ideal para planejamento de sessões de fisioterapia assistida por robótica.
+    </div>
+  </div>
+
+  <div id="info">
+    <div>
+      <div class="info-label">Status da Simulação</div>
+      <div class="info-value" id="frameInfo">Pronto</div>
+    </div>
+    <div>
+      <div class="info-label" id="label_cur_t1">Ângulo Ombro</div>
+      <div class="info-value" id="curT1">20.0°</div>
+    </div>
+    <div>
+      <div class="info-label" id="label_cur_t2">Ângulo Cotovelo</div>
+      <div class="info-value" id="curT2">-20.0°</div>
+    </div>
+    <div>
+      <div class="info-label">Passos Planejados</div>
+      <div class="info-value" id="stepsCount">0</div>
+    </div>
+    <div>
+      <div class="info-label">Tipo de Membro</div>
+      <div class="info-value" id="exoTypeDisplay">Braço</div>
+    </div>
+  </div>
+
+  <!-- Three.js usando importmap (método moderno recomendado) -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    console.log('✓ Three.js carregado (v' + THREE.REVISION + ')');
+
+    /* ================= CONFIGURAÇÕES ================= */
+    let LINK1 = 0.35;
+    let LINK2 = 0.25;
+    let OBST_RADIUS = 0.10;
+    let OBST_POS;
+
+    const TH1_MIN = 0, TH1_MAX = 180, TH1_STEP = 5;
+    const TH2_MIN = -145, TH2_MAX = 0, TH2_STEP = 5;
+
+    const TH1 = []; for(let a=TH1_MIN;a<=TH1_MAX;a+=TH1_STEP) TH1.push(a);
+    const TH2 = []; for(let a=TH2_MIN;a<=TH2_MAX;a+=TH2_STEP) TH2.push(a);
+
+    /* ========= Scene / Renderer / Camera ========= */
+    let scene, camera, renderer, controls;
+    let armRoot, link1Container, link2Container, link1Mesh, link2Mesh, joint1Mesh, joint2Mesh;
+    let gridHelper, obstacleMesh, humanBodyMesh;
+    let frames = [], curFrame = 0, playing=false, paused=false, playTimer=null;
+    let currentExoType = 'arm';
+
+    /* small utility */
+    function degToRad(d){ return d * Math.PI/180; }
+    function radToDeg(r){ return r * 180/Math.PI; }
+
+    /* ======== Scene setup ======== */
+    function initScene(){
+      OBST_POS = new THREE.Vector3(0.40, 0.0, 0.0);
+      
+      renderer = new THREE.WebGLRenderer({antialias:true});
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0x0a0e1a);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      document.body.appendChild(renderer.domElement);
+
+      scene = new THREE.Scene();
+      scene.fog = new THREE.Fog(0x0a0e1a, 2, 10);
+      
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.01, 50);
+      camera.position.set(0.7, 0.5, 1.2);
+
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.target.set(0.25, 0.05, 0);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.update();
+
+      const amb = new THREE.AmbientLight(0xffffff, 0.5); 
+      scene.add(amb);
+      
+      const dir = new THREE.DirectionalLight(0xffffff, 0.8); 
+      dir.position.set(2, 3, 2);
+      dir.castShadow = true;
+      dir.shadow.camera.near = 0.1;
+      dir.shadow.camera.far = 10;
+      dir.shadow.camera.left = -2;
+      dir.shadow.camera.right = 2;
+      dir.shadow.camera.top = 2;
+      dir.shadow.camera.bottom = -2;
+      scene.add(dir);
+      
+      const fillLight = new THREE.DirectionalLight(0x6366f1, 0.3);
+      fillLight.position.set(-2, 1, -2);
+      scene.add(fillLight);
+
+      gridHelper = new THREE.GridHelper(1.2, 12, 0x334155, 0x1e293b); 
+      gridHelper.receiveShadow = true;
+      scene.add(gridHelper);
+
+      const bodyGeom = new THREE.CylinderGeometry(0.08, 0.08, 0.15, 16);
+      const bodyMat = new THREE.MeshStandardMaterial({ 
+        color: 0x475569, 
+        metalness: 0.1, 
+        roughness: 0.8 
+      });
+      humanBodyMesh = new THREE.Mesh(bodyGeom, bodyMat);
+      humanBodyMesh.position.set(0, 0.075, 0);
+      humanBodyMesh.castShadow = true;
+      humanBodyMesh.receiveShadow = true;
+      scene.add(humanBodyMesh);
+
+      armRoot = new THREE.Group(); 
+      scene.add(armRoot);
+
+      buildExoskeleton('arm');
+
+      const obsGeom = new THREE.SphereGeometry(OBST_RADIUS, 32, 24);
+      const obsMat = new THREE.MeshStandardMaterial({
+        color: 0xff4444, 
+        transparent: true, 
+        opacity: 0.45,
+        metalness: 0.3,
+        roughness: 0.4,
+        emissive: 0xff2222,
+        emissiveIntensity: 0.2
+      });
+      obstacleMesh = new THREE.Mesh(obsGeom, obsMat);
+      obstacleMesh.position.copy(OBST_POS);
+      obstacleMesh.castShadow = true;
+      scene.add(obstacleMesh);
+
+      window.addEventListener('resize', onResize);
+    }
+
+    function buildExoskeleton(type) {
+      while(armRoot.children.length > 0) {
+        armRoot.remove(armRoot.children[0]);
+      }
+
+      // Materiais inspirados nas referências (branco/cinza/preto)
+      const whiteMat = new THREE.MeshStandardMaterial({ 
+        color: 0xf5f5f5,
+        metalness: 0.3, 
+        roughness: 0.4,
+      });
+      
+      const darkGreyMat = new THREE.MeshStandardMaterial({ 
+        color: 0x4a4a4a,
+        metalness: 0.6, 
+        roughness: 0.3,
+      });
+      
+      const lightGreyMat = new THREE.MeshStandardMaterial({ 
+        color: 0xc0c0c0,
+        metalness: 0.7,
+        roughness: 0.2 
+      });
+      
+      const blackMat = new THREE.MeshStandardMaterial({
+        color: 0x2a2a2a,
+        metalness: 0.5,
+        roughness: 0.4
+      });
+
+      const redLedMat = new THREE.MeshStandardMaterial({
+        color: 0xff3333,
+        metalness: 0.2,
+        roughness: 0.6,
+        emissive: 0xff0000,
+        emissiveIntensity: 0.6
+      });
+
+      const yellowLedMat = new THREE.MeshStandardMaterial({
+        color: 0xffff00,
+        metalness: 0.2,
+        roughness: 0.6,
+        emissive: 0xffff00,
+        emissiveIntensity: 0.8
+      });
+
+      if (type === 'leg') {
+        LINK1 = 0.45;
+        LINK2 = 0.42;
+      } else {
+        LINK1 = 0.35;
+        LINK2 = 0.28;
+      }
+
+      const linkWidth = type === 'leg' ? 0.12 : 0.08;
+      const linkDepth = type === 'leg' ? 0.10 : 0.06;
+
+      link1Container = new THREE.Group();
+      
+      // ========== JUNTA PROXIMAL (Ombro/Quadril) ==========
+      const jointSize = type === 'leg' ? 0.10 : 0.075;
+      
+      // Base cilíndrica grande (como na referência)
+      const baseJoint = new THREE.Mesh(
+        new THREE.CylinderGeometry(jointSize, jointSize, 0.08, 32),
+        lightGreyMat
+      );
+      baseJoint.rotation.z = Math.PI/2;
+      baseJoint.castShadow = true;
+      link1Container.add(baseJoint);
+
+      // Anéis laterais (detalhes)
+      for(let side of [-1, 1]) {
+        const sideRing = new THREE.Mesh(
+          new THREE.CylinderGeometry(jointSize * 1.05, jointSize * 1.05, 0.015, 32),
+          darkGreyMat
+        );
+        sideRing.rotation.z = Math.PI/2;
+        sideRing.position.x = side * 0.035;
+        sideRing.castShadow = true;
+        link1Container.add(sideRing);
+      }
+
+      // Centro da articulação (núcleo)
+      joint1Mesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(jointSize * 0.4, jointSize * 0.4, 0.12, 24), 
+        blackMat
+      );
+      joint1Mesh.rotation.z = Math.PI/2;
+      joint1Mesh.castShadow = true;
+      link1Container.add(joint1Mesh);
+
+      // LEDs de status (amarelos como na referência do braço)
+      if(type === 'arm') {
+        for(let i = 0; i < 2; i++) {
+          const led = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.008, 0.008, 0.005, 12),
+            yellowLedMat
+          );
+          led.position.set(0, jointSize * 0.7, -0.03 + i * 0.06);
+          led.rotation.x = Math.PI/2;
+          link1Container.add(led);
+        }
+      }
+
+      // ========== LINK 1 (Braço superior / Coxa) ==========
+      // Cobertura principal (shell) - estilo das referências
+      const mainShell = new THREE.Mesh(
+        new THREE.BoxGeometry(LINK1 * 0.85, linkWidth, linkDepth),
+        whiteMat
+      );
+      mainShell.position.set(LINK1/2 + 0.03, 0, 0);
+      mainShell.castShadow = true;
+      mainShell.receiveShadow = true;
+      link1Container.add(mainShell);
+
+      // Faixa lateral escura (detalhe)
+      const sideBand = new THREE.Mesh(
+        new THREE.BoxGeometry(LINK1 * 0.88, linkWidth * 0.3, linkDepth * 1.02),
+        darkGreyMat
+      );
+      sideBand.position.set(LINK1/2 + 0.03, linkWidth * 0.45, 0);
+      sideBand.castShadow = true;
+      link1Container.add(sideBand);
+
+      // Faixa inferior
+      const bottomBand = new THREE.Mesh(
+        new THREE.BoxGeometry(LINK1 * 0.88, linkWidth * 0.3, linkDepth * 1.02),
+        darkGreyMat
+      );
+      bottomBand.position.set(LINK1/2 + 0.03, -linkWidth * 0.45, 0);
+      bottomBand.castShadow = true;
+      link1Container.add(bottomBand);
+
+      // Aberturas de ventilação (slots)
+      for(let i = 0; i < 5; i++) {
+        const vent = new THREE.Mesh(
+          new THREE.BoxGeometry(0.015, linkWidth * 0.2, 0.004),
+          blackMat
+        );
+        vent.position.set(LINK1 * (0.25 + i * 0.12), linkWidth * 0.45, linkDepth * 0.52);
+        link1Container.add(vent);
+      }
+
+      // Painel lateral com detalhes
+      const sidePanel = new THREE.Mesh(
+        new THREE.BoxGeometry(LINK1 * 0.6, linkWidth * 0.6, 0.008),
+        lightGreyMat
+      );
+      sidePanel.position.set(LINK1 * 0.55, 0, linkDepth * 0.52);
+      sidePanel.castShadow = true;
+      link1Container.add(sidePanel);
+
+      // LEDs indicadores
+      if(type === 'leg') {
+        const ledRed = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.012, 0.012, 0.008, 12),
+          redLedMat
+        );
+        ledRed.position.set(LINK1 * 0.6, -linkWidth * 0.25, linkDepth * 0.54);
+        ledRed.rotation.x = Math.PI/2;
+        link1Container.add(ledRed);
+      }
+
+      // Estrutura interna (frame visível nas laterais)
+      for(let side of [-1, 1]) {
+        const frameBar = new THREE.Mesh(
+          new THREE.BoxGeometry(LINK1 * 0.75, 0.02, 0.02),
+          blackMat
+        );
+        frameBar.position.set(LINK1/2, side * linkWidth * 0.55, 0);
+        frameBar.castShadow = true;
+        link1Container.add(frameBar);
+      }
+
+      // ========== JUNTA DO MEIO (Cotovelo/Joelho) ==========
+      link2Container = new THREE.Group();
+      link2Container.position.set(LINK1, 0, 0);
+
+      const joint2Size = type === 'leg' ? 0.11 : 0.08;
+
+      // Housing do motor (mais robusto)
+      const motorBox = new THREE.Mesh(
+        new THREE.BoxGeometry(0.09, linkWidth * 1.2, linkDepth * 1.2),
+        darkGreyMat
+      );
+      motorBox.castShadow = true;
+      motorBox.receiveShadow = true;
+      link2Container.add(motorBox);
+
+      // Tampa superior do motor
+      const motorCover = new THREE.Mesh(
+        new THREE.BoxGeometry(0.095, linkWidth * 1.25, linkDepth * 1.25),
+        whiteMat
+      );
+      motorCover.castShadow = true;
+      link2Container.add(motorCover);
+
+      // Cilindro grande da articulação (similar às referências)
+      const bigCylinder = new THREE.Mesh(
+        new THREE.CylinderGeometry(joint2Size, joint2Size, linkWidth * 1.3, 32),
+        lightGreyMat
+      );
+      bigCylinder.rotation.z = Math.PI/2;
+      bigCylinder.castShadow = true;
+      link2Container.add(bigCylinder);
+
+      // Eixo central preto
+      joint2Mesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(joint2Size * 0.5, joint2Size * 0.5, linkWidth * 1.4, 24), 
+        blackMat
+      );
+      joint2Mesh.rotation.z = Math.PI/2;
+      joint2Mesh.castShadow = true;
+      link2Container.add(joint2Mesh);
+
+      // Discos laterais (flanges)
+      for(let side of [-1, 1]) {
+        const flange = new THREE.Mesh(
+          new THREE.CylinderGeometry(joint2Size * 1.1, joint2Size * 1.1, 0.02, 32),
+          darkGreyMat
+        );
+        flange.rotation.z = Math.PI/2;
+        flange.position.y = side * linkWidth * 0.68;
+        flange.castShadow = true;
+        link2Container.add(flange);
+
+        // Parafusos no flange
+        for(let i = 0; i < 8; i++) {
+          const angle = (i / 8) * Math.PI * 2;
+          const bolt = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.008, 0.008, 0.025, 8),
+            blackMat
+          );
+          bolt.position.set(
+            0,
+            side * linkWidth * 0.68,
+            Math.cos(angle) * joint2Size * 0.9,
+            Math.sin(angle) * joint2Size * 0.9
+          );
+          bolt.rotation.x = Math.PI/2;
+          link2Container.add(bolt);
+        }
+      }
+
+      // Faixa de detalhes
+      const detailStripe = new THREE.Mesh(
+        new THREE.CylinderGeometry(joint2Size * 1.05, joint2Size * 1.05, 0.015, 32),
+        type === 'arm' ? yellowLedMat : redLedMat
+      );
+      detailStripe.rotation.z = Math.PI/2;
+      detailStripe.castShadow = true;
+      link2Container.add(detailStripe);
+
+      // ========== LINK 2 (Antebraço / Canela) ==========
+      const link2Width = linkWidth * 0.9;
+      const link2Depth = linkDepth * 0.9;
+
+      // Cobertura principal do link 2
+      const shell2 = new THREE.Mesh(
+        new THREE.BoxGeometry(LINK2 * 0.88, link2Width, link2Depth),
+        whiteMat
+      );
+      shell2.position.set(LINK2/2 + 0.02, 0, 0);
+      shell2.castShadow = true;
+      shell2.receiveShadow = true;
+      link2Container.add(shell2);
+
+      // Painel lateral cinza escuro
+      const darkPanel = new THREE.Mesh(
+        new THREE.BoxGeometry(LINK2 * 0.7, link2Width * 0.95, 0.01),
+        darkGreyMat
+      );
+      darkPanel.position.set(LINK2 * 0.5, 0, -link2Depth * 0.51);
+      darkPanel.castShadow = true;
+      link2Container.add(darkPanel);
+
+      // Linhas de ventilação
+      for(let i = 0; i < 6; i++) {
+        const ventLine = new THREE.Mesh(
+          new THREE.BoxGeometry(0.012, link2Width * 0.7, 0.003),
+          blackMat
+        );
+        ventLine.position.set(LINK2 * (0.3 + i * 0.08), 0, -link2Depth * 0.52);
+        link2Container.add(ventLine);
+      }
+
+      // Faixa de detalhes laterais
+      for(let side of [-1, 1]) {
+        const sideTrim = new THREE.Mesh(
+          new THREE.BoxGeometry(LINK2 * 0.85, 0.02, link2Depth * 1.05),
+          darkGreyMat
+        );
+        sideTrim.position.set(LINK2/2 + 0.02, side * link2Width * 0.52, 0);
+        sideTrim.castShadow = true;
+        link2Container.add(sideTrim);
+      }
+
+      // Conectores/junções (detalhes estruturais)
+      for(let i = 0; i < 3; i++) {
+        const connector = new THREE.Mesh(
+          new THREE.BoxGeometry(0.025, link2Width * 1.05, link2Depth * 0.4),
+          lightGreyMat
+        );
+        connector.position.set(LINK2 * (0.25 + i * 0.3), 0, 0);
+        connector.castShadow = true;
+        link2Container.add(connector);
+      }
+
+      // LED de status (se perna)
+      if(type === 'leg') {
+        const statusLed = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.015, 0.015, 0.01, 12),
+          redLedMat
+        );
+        statusLed.position.set(LINK2 * 0.7, link2Width * 0.3, -link2Depth * 0.53);
+        statusLed.rotation.x = Math.PI/2;
+        link2Container.add(statusLed);
+      }
+
+      // ========== END EFFECTOR (Mão/Pé) ==========
+      if(type === 'leg') {
+        // PÉ ANATÔMICO REALISTA (baseado na segunda imagem)
+        
+        // Tornozelo (conexão)
+        const ankle = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.04, 0.045, 0.06, 16),
+          lightGreyMat
+        );
+        ankle.position.set(LINK2 + 0.02, 0, 0);
+        ankle.rotation.z = Math.PI/2;
+        ankle.castShadow = true;
+        link2Container.add(ankle);
+
+        // Parte superior do pé (branca)
+        const footTop = new THREE.Mesh(
+          new THREE.BoxGeometry(0.20, 0.06, 0.10),
+          whiteMat
+        );
+        footTop.position.set(LINK2 + 0.13, -0.05, 0);
+        footTop.castShadow = true;
+        footTop.receiveShadow = true;
+        link2Container.add(footTop);
+
+        // Formato anatômico (dedos arredondados)
+        const toeArea = new THREE.Mesh(
+          new THREE.SphereGeometry(0.055, 16, 16),
+          whiteMat
+        );
+        toeArea.scale.set(1.5, 0.7, 0.9);
+        toeArea.position.set(LINK2 + 0.23, -0.05, 0);
+        toeArea.castShadow = true;
+        link2Container.add(toeArea);
+
+        // Sola inferior (preta/cinza escura)
+        const sole = new THREE.Mesh(
+          new THREE.BoxGeometry(0.22, 0.025, 0.11),
+          new THREE.MeshStandardMaterial({ 
+            color: 0x1a1a1a, 
+            metalness: 0.1, 
+            roughness: 0.95 
+          })
+        );
+        sole.position.set(LINK2 + 0.13, -0.095, 0);
+        sole.castShadow = true;
+        sole.receiveShadow = true;
+        link2Container.add(sole);
+
+        // Sola dos dedos
+        const toeSole = new THREE.Mesh(
+          new THREE.SphereGeometry(0.058, 16, 16),
+          new THREE.MeshStandardMaterial({ 
+            color: 0x1a1a1a, 
+            metalness: 0.1, 
+            roughness: 0.95 
+          })
+        );
+        toeSole.scale.set(1.5, 0.5, 0.9);
+        toeSole.position.set(LINK2 + 0.23, -0.095, 0);
+        toeSole.castShadow = true;
+        link2Container.add(toeSole);
+
+        // Faixa lateral cinza
+        const footSide = new THREE.Mesh(
+          new THREE.BoxGeometry(0.20, 0.035, 0.105),
+          darkGreyMat
+        );
+        footSide.position.set(LINK2 + 0.13, -0.065, 0);
+        footSide.castShadow = true;
+        link2Container.add(footSide);
+
+        // Detalhes estruturais (nervuras)
+        for(let i = 0; i < 4; i++) {
+          const rib = new THREE.Mesh(
+            new THREE.BoxGeometry(0.01, 0.05, 0.08),
+            lightGreyMat
+          );
+          rib.position.set(LINK2 + 0.08 + i * 0.04, -0.05, 0);
+          rib.castShadow = true;
+          link2Container.add(rib);
+        }
+
+        // Sensores de pressão (LEDs vermelhos)
+        const sensorPositions = [
+          [0.08, -0.10, -0.03],
+          [0.08, -0.10, 0.03],
+          [0.15, -0.10, -0.04],
+          [0.15, -0.10, 0.04],
+          [0.20, -0.10, 0],
+        ];
+        
+        sensorPositions.forEach(pos => {
+          const sensor = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.01, 0.01, 0.008, 12),
+            redLedMat
+          );
+          sensor.position.set(LINK2 + pos[0], pos[1], pos[2]);
+          link2Container.add(sensor);
+        });
+
+      } else {
+        // GARRA PARA BRAÇO (melhorada)
+        
+        // Base da garra
+        const gripBase = new THREE.Mesh(
+          new THREE.BoxGeometry(0.08, linkWidth * 0.8, linkDepth * 0.8),
+          darkGreyMat
+        );
+        gripBase.position.set(LINK2 + 0.04, 0, 0);
+        gripBase.castShadow = true;
+        link2Container.add(gripBase);
+
+        // Cobertura da garra
+        const gripCover = new THREE.Mesh(
+          new THREE.BoxGeometry(0.085, linkWidth * 0.85, linkDepth * 0.85),
+          whiteMat
+        );
+        gripCover.position.set(LINK2 + 0.04, 0, 0);
+        gripCover.castShadow = true;
+        link2Container.add(gripCover);
+
+        // Dedos da garra (2 dedos opostos)
+        const finger1 = new THREE.Mesh(
+          new THREE.BoxGeometry(0.06, 0.025, 0.015),
+          lightGreyMat
+        );
+        finger1.position.set(LINK2 + 0.11, linkWidth * 0.25, 0);
+        finger1.castShadow = true;
+        link2Container.add(finger1);
+
+        const finger2 = new THREE.Mesh(
+          new THREE.BoxGeometry(0.06, 0.025, 0.015),
+          lightGreyMat
+        );
+        finger2.position.set(LINK2 + 0.11, -linkWidth * 0.25, 0);
+        finger2.castShadow = true;
+        link2Container.add(finger2);
+
+        // Ponta dos dedos (preto)
+        for(let side of [1, -1]) {
+          const fingerTip = new THREE.Mesh(
+            new THREE.BoxGeometry(0.02, 0.03, 0.018),
+            blackMat
+          );
+          fingerTip.position.set(LINK2 + 0.14, side * linkWidth * 0.25, 0);
+          fingerTip.castShadow = true;
+          link2Container.add(fingerTip);
+        }
+
+        // LEDs de status (amarelos)
+        for(let i = 0; i < 2; i++) {
+          const led = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.008, 0.008, 0.005, 12),
+            yellowLedMat
+          );
+          led.position.set(LINK2 + 0.03, 0, -linkDepth * 0.3 + i * linkDepth * 0.6);
+          led.rotation.x = Math.PI/2;
+          link2Container.add(led);
+        }
+      }
+
+      link1Container.add(link2Container);
+      armRoot.add(link1Container);
+
+      if (type === 'leg') {
+        humanBodyMesh.position.set(0, 0.3, 0);
+        armRoot.position.set(0, 0.3, 0);
+      } else {
+        humanBodyMesh.position.set(0, 0.075, 0);
+        armRoot.position.set(0, 0, 0);
+      }
+    }
+
+    function render(){
+      requestAnimationFrame(render);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    function onResize(){
+      camera.aspect = window.innerWidth/window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function updateArmPose(t1_deg, t2_deg){
+      link1Container.rotation.z = degToRad(t1_deg);
+      link2Container.rotation.z = degToRad(t2_deg);
+    }
+
+    function fkWorld(theta1_deg, theta2_deg){
+      const t1 = degToRad(theta1_deg);
+      const t2 = degToRad(theta2_deg);
+      const x1 = LINK1 * Math.cos(t1);
+      const y1 = LINK1 * Math.sin(t1);
+      const x2 = x1 + LINK2 * Math.cos(t1 + t2);
+      const y2 = y1 + LINK2 * Math.sin(t1 + t2);
+      return {
+        shoulder: new THREE.Vector3(0,0,0),
+        elbow: new THREE.Vector3(x1, y1, 0),
+        hand: new THREE.Vector3(x2, y2, 0)
+      };
+    }
+
+    function pointSegmentDistance(p, a, b){
+      const ab = new THREE.Vector3().subVectors(b,a);
+      const ap = new THREE.Vector3().subVectors(p,a);
+      const t = THREE.MathUtils.clamp(ap.dot(ab) / ab.lengthSq(), 0, 1);
+      const proj = new THREE.Vector3().copy(a).addScaledVector(ab, t);
+      return p.distanceTo(proj);
+    }
+
+    function capsuleSphereCollision(a,b, r_caps, c, r_s){
+      const d = pointSegmentDistance(c, a, b);
+      return d <= (r_caps + r_s);
+    }
+
+    function findIndex(arr, val){
+      let best=0, bd=Infinity;
+      for(let i=0;i<arr.length;i++){
+        const d = Math.abs(arr[i]-val);
+        if(d<bd){ bd=d; best=i; }
+      }
+      return best;
+    }
+    function key(i,j){ return i+','+j; }
+
+    function astarPlan(start_deg, goal_deg){
+      const si = findIndex(TH1, start_deg[0]);
+      const sj = findIndex(TH2, start_deg[1]);
+      const gi = findIndex(TH1, goal_deg[0]);
+      const gj = findIndex(TH2, goal_deg[1]);
+
+      const startKey = key(si,sj);
+      const open = new TinyHeap((a,b)=>a.f-b.f);
+      const gscore = {}; gscore[startKey]=0;
+      const came = {};
+
+      open.push({i:si,j:sj,f:heuristic(si,sj,gi,gj)});
+
+      const visited = new Set();
+
+      while(open.size()>0){
+        const cur = open.pop();
+        const ci=cur.i, cj=cur.j, ckey=key(ci,cj);
+        if(ci===gi && cj===gj){
+          const path = [];
+          let pk = ckey;
+          while(pk){
+            const [pi,pj] = pk.split(',').map(x=>parseInt(x));
+            path.push([TH1[pi], TH2[pj]]);
+            pk = came[pk];
+          }
+          path.reverse();
+          return path;
+        }
+        visited.add(ckey);
+        for(let di=-1;di<=1;di++){
+          for(let dj=-1;dj<=1;dj++){
+            if(di===0 && dj===0) continue;
+            const ni=ci+di, nj=cj+dj;
+            if(ni<0 || ni>=TH1.length || nj<0 || nj>=TH2.length) continue;
+            const nkey = key(ni,nj);
+            if(visited.has(nkey)) continue;
+
+            const theta1 = TH1[ni], theta2 = TH2[nj];
+            const joints = fkWorld(theta1, theta2);
+            const r_caps = 0.035;
+            const c = obstacleMesh.position.clone();
+            const segA = joints.shoulder, segB = joints.elbow;
+            if(capsuleSphereCollision(segA, segB, r_caps, c, OBST_RADIUS)) continue;
+            const segC = joints.elbow, segD = joints.hand;
+            if(capsuleSphereCollision(segC, segD, r_caps, c, OBST_RADIUS)) continue;
+
+            const tentative = gscore[ckey] + costBetween(ci,cj,ni,nj);
+            if(tentative < (gscore[nkey] ?? Infinity)){
+              gscore[nkey] = tentative;
+              came[nkey] = ckey;
+              open.push({i:ni,j:nj,f: tentative + heuristic(ni,nj,gi,gj)});
+            }
+          }
+        }
+      }
+      return null;
+    }
+
+    function heuristic(i,j,gi,gj){
+      const r1 = degToRad(TH1[i]-TH1[gi]);
+      const r2 = degToRad(TH2[j]-TH2[gj]);
+      return Math.hypot(r1,r2);
+    }
+    function costBetween(i1,j1,i2,j2){
+      const r1a = degToRad(TH1[i1]), r1b = degToRad(TH1[i2]);
+      const r2a = degToRad(TH2[j1]), r2b = degToRad(TH2[j2]);
+      return Math.abs(r1a-r1b) + Math.abs(r2a-r2b);
+    }
+
+    function TinyHeap(cmp){ this.data=[]; this.cmp=cmp||((a,b)=>a-b); }
+    TinyHeap.prototype.size=function(){return this.data.length;}
+    TinyHeap.prototype.push=function(v){ this.data.push(v); this._siftUp(this.data.length-1); }
+    TinyHeap.prototype.pop=function(){ if(this.data.length===0) return null; const t=this.data[0]; const l=this.data.pop(); if(this.data.length>0){ this.data[0]=l; this._siftDown(0);} return t; }
+    TinyHeap.prototype._siftUp=function(i){ const data=this.data, cmp=this.cmp; while(i>0){ const p=Math.floor((i-1)/2); if(cmp(data[i],data[p])<0){ [data[p],data[i]]=[data[i],data[p]]; i=p; } else break;} }
+    TinyHeap.prototype._siftDown=function(i){ const data=this.data, cmp=this.cmp; while(true){ let l=2*i+1, r=l+1, m=i; if(l<data.length && cmp(data[l], data[m])<0) m=l; if(r<data.length && cmp(data[r],data[m])<0) m=r; if(m!==i){ [data[i],data[m]]=[data[m],data[i]]; i=m; } else break; } }
+
+    function catmullRomUpsample(path, upFactor=6){
+      if(path.length<3) return path.slice();
+      const out=[];
+      const pts = [];
+      pts.push(path[0]);
+      for(const p of path) pts.push(p);
+      pts.push(path[path.length-1]);
+
+      for(let i=0;i<pts.length-3;i++){
+        const p0 = pts[i], p1 = pts[i+1], p2 = pts[i+2], p3 = pts[i+3];
+        for(let s=0;s<upFactor;s++){
+          const t = s / upFactor;
+          const t2 = t*t, t3 = t2*t;
+          const a = (-t3 + 2*t2 - t) * 0.5;
+          const b = (3*t3 -5*t2 + 2) * 0.5;
+          const c = (-3*t3 + 4*t2 + t) * 0.5;
+          const d = (t3 - t2) * 0.5;
+          const t1n = a*p0[0] + b*p1[0] + c*p2[0] + d*p3[0];
+          const t2n = a*p0[1] + b*p1[1] + c*p2[1] + d*p3[1];
+          out.push([t1n, t2n]);
+        }
+      }
+      out.push(path[path.length-1]);
+      return out;
+    }
+
+    function playSequence(seq, speed){
+      frames = seq.slice();
+      document.getElementById('stepsCount').innerText = seq.length;
+      curFrame = 0;
+      playing = true;
+      paused = false;
+      if(playTimer) clearTimeout(playTimer);
+      stepPlay(speed);
+    }
+
+    function stepPlay(speed){
+      if(paused){ 
+        playTimer = setTimeout(()=>stepPlay(speed), 80); 
+        return; 
+      }
+      
+      if(curFrame >= frames.length){ 
+        playing = false; 
+        const totalFrames = frames.length;
+        document.getElementById('frameInfo').innerText = `Concluído (${totalFrames} frames)`;
+        
+        setTimeout(() => {
+          document.getElementById('frameInfo').innerText = 'Pronto';
+        }, 3000);
+        return; 
+      }
+      
+      const [t1,t2] = frames[curFrame];
+      updateArmPose(t1,t2);
+      
+      document.getElementById('curT1').innerText = `${t1.toFixed(1)}°`;
+      document.getElementById('curT2').innerText = `${t2.toFixed(1)}°`;
+      
+      const progress = ((curFrame + 1) / frames.length * 100).toFixed(0);
+      document.getElementById('frameInfo').innerText = `${curFrame+1} / ${frames.length} (${progress}%)`;
+      
+      curFrame++;
+      playTimer = setTimeout(()=>stepPlay(speed), speed);
+    }
+
+    // UI Setup
+    function wireUI(){
+      const t1i = document.getElementById('t1i');
+      const t2i = document.getElementById('t2i');
+      const t1f = document.getElementById('t1f');
+      const t2f = document.getElementById('t2f');
+      const mode = document.getElementById('mode');
+      const exoType = document.getElementById('exoType');
+      const btnSim = document.getElementById('btnSim');
+      const btnPause = document.getElementById('btnPause');
+      const btnReset = document.getElementById('btnReset');
+      const cbObs = document.getElementById('cbObstacle');
+      const cbGrid = document.getElementById('cbGrid');
+      const speedEl = document.getElementById('speed');
+      const exportBtn = document.getElementById('exportBtn');
+      const loadingIndicator = document.getElementById('loadingIndicator');
+
+      function updateLabels(type) {
+        currentExoType = type;
+        const isArm = type === 'arm';
+        
+        document.getElementById('label_t1i').innerText = isArm ? 'θ1 (Ombro)' : 'θ1 (Quadril)';
+        document.getElementById('label_t2i').innerText = isArm ? 'θ2 (Cotovelo)' : 'θ2 (Joelho)';
+        document.getElementById('label_t1f').innerText = isArm ? 'θ1 (Ombro)' : 'θ1 (Quadril)';
+        document.getElementById('label_t2f').innerText = isArm ? 'θ2 (Cotovelo)' : 'θ2 (Joelho)';
+        
+        document.getElementById('label_cur_t1').innerText = isArm ? 'Ângulo Ombro' : 'Ângulo Quadril';
+        document.getElementById('label_cur_t2').innerText = isArm ? 'Ângulo Cotovelo' : 'Ângulo Joelho';
+        document.getElementById('exoTypeDisplay').innerText = isArm ? 'Braço' : 'Perna';
+        
+        buildExoskeleton(type);
+        updateArmPose(parseFloat(t1i.value), parseFloat(t2i.value));
+      }
+
+      function updateDisplays(){
+        document.getElementById('t1i_val').innerText = t1i.value + '°';
+        document.getElementById('t2i_val').innerText = t2i.value + '°';
+        document.getElementById('t1f_val').innerText = t1f.value + '°';
+        document.getElementById('t2f_val').innerText = t2f.value + '°';
+        document.getElementById('speed_val').innerText = speedEl.value + 'ms';
+      }
+      
+      [t1i,t2i,t1f,t2f,speedEl].forEach(el => {
+        el.addEventListener('input', updateDisplays);
+      });
+      
+      [t1i, t2i].forEach(el => {
+        el.addEventListener('input', () => {
+          if(!playing) {
+            updateArmPose(parseFloat(t1i.value), parseFloat(t2i.value));
+            document.getElementById('curT1').innerText = parseFloat(t1i.value).toFixed(1) + '°';
+            document.getElementById('curT2').innerText = parseFloat(t2i.value).toFixed(1) + '°';
+          }
+        });
+      });
+      
+      updateDisplays();
+
+      exoType.addEventListener('change', () => {
+        updateLabels(exoType.value);
+      });
+
+      btnSim.addEventListener('click', async ()=>{
+        btnSim.disabled = true;
+        loadingIndicator.classList.add('active');
+        
+        const start = [parseFloat(t1i.value), parseFloat(t2i.value)];
+        const goal  = [parseFloat(t1f.value), parseFloat(t2f.value)];
+        const chosen = mode.value;
+        
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        if(chosen === 'interp'){
+          const N=140;
+          const seq=[];
+          for(let k=0;k<=N;k++){
+            const a=k/N;
+            seq.push([ start[0] + (goal[0]-start[0])*a, start[1] + (goal[1]-start[1])*a ]);
+          }
+          playSequence(seq, parseInt(speedEl.value));
+        } else {
+          const path = astarPlan(start, goal);
+          if(!path){ 
+            alert('⚠️ Nenhum caminho encontrado!\n\nO algoritmo A* não conseguiu planejar uma trajetória segura.\n\nSugestões:\n• Ajuste os ângulos inicial e final\n• Desabilite o obstáculo\n• Tente o modo de Interpolação Linear'); 
+            btnSim.disabled=false; 
+            loadingIndicator.classList.remove('active');
+            return; 
+          }
+          const smooth = catmullRomUpsample(path, 6);
+          playSequence(smooth, parseInt(speedEl.value));
+        }
+        
+        loadingIndicator.classList.remove('active');
+        btnSim.disabled = false;
+      });
+
+      btnPause.addEventListener('click', ()=>{
+        paused = !paused;
+        btnPause.innerHTML = paused ? '▶' : '⏸';
+        btnPause.title = paused ? 'Retomar' : 'Pausar';
+      });
+
+      btnReset.addEventListener('click', ()=>{
+        if(playTimer) clearTimeout(playTimer);
+        playing = false;
+        paused = false;
+        btnPause.innerHTML = '⏸';
+        
+        controls.reset();
+        if(currentExoType === 'arm') {
+          camera.position.set(0.7,0.5,1.2);
+          controls.target.set(0.25, 0.05, 0);
+        } else {
+          camera.position.set(0.7,0.7,1.2);
+          controls.target.set(0.25, 0.3, 0);
+        }
+        controls.update();
+        
+        updateArmPose(parseFloat(t1i.value), parseFloat(t2i.value));
+        document.getElementById('frameInfo').innerText = 'Pronto';
+      });
+
+      cbObs.addEventListener('change', ()=>{ 
+        obstacleMesh.visible = cbObs.checked; 
+      });
+      
+      cbGrid.addEventListener('change', ()=>{ 
+        gridHelper.visible = cbGrid.checked; 
+      });
+
+      exportBtn.addEventListener('click', ()=>{
+        if(!frames || frames.length===0){ 
+          alert('📊 Nenhuma trajetória disponível!\n\nExecute uma simulação primeiro para gerar dados para exportação.'); 
+          return; 
+        }
+        
+        const timestamp = new Date().toISOString().replace(/:/g,'-').split('.')[0];
+        const exoTypeName = currentExoType === 'arm' ? 'braco' : 'perna';
+        
+        let csv = `# ExoRehab 3D - Trajetoria de Exoesqueleto\n`;
+        csv += `# Tipo: ${currentExoType === 'arm' ? 'Braço (Membro Superior)' : 'Perna (Membro Inferior)'}\n`;
+        csv += `# Gerado em: ${new Date().toLocaleString('pt-BR')}\n`;
+        csv += `# Total de frames: ${frames.length}\n`;
+        csv += `# Algoritmo: ${mode.value === 'astar' ? 'A* (Otimizado)' : 'Interpolação Linear'}\n`;
+        csv += `#\n`;
+        csv += `frame,theta1_deg,theta2_deg,theta1_rad,theta2_rad\n`;
+        
+        for(let i=0;i<frames.length;i++){
+          const t1_deg = frames[i][0];
+          const t2_deg = frames[i][1];
+          const t1_rad = degToRad(t1_deg);
+          const t2_rad = degToRad(t2_deg);
+          csv += `${i+1},${t1_deg.toFixed(4)},${t2_deg.toFixed(4)},${t1_rad.toFixed(6)},${t2_rad.toFixed(6)}\n`;
+        }
+        
+        const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); 
+        a.href = url; 
+        a.download = `exorehab_${exoTypeName}_${timestamp}.csv`; 
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        const originalText = exportBtn.innerHTML;
+        exportBtn.innerHTML = '✓ Exportado!';
+        exportBtn.style.background = '#059669';
+        setTimeout(() => {
+          exportBtn.innerHTML = originalText;
+          exportBtn.style.background = '';
+        }, 2000);
+      });
+      
+      updateLabels('arm');
+      
+      setTimeout(() => {
+        updateArmPose(20, -20);
+        document.getElementById('curT1').innerText = '20.0°';
+        document.getElementById('curT2').innerText = '-20.0°';
+      }, 100);
+    }
+
+    // Iniciar cena PRIMEIRO
+    initScene();
+    render();
+    
+    // Depois configurar UI (quando armRoot e obstacleMesh já existem)
+    wireUI();
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Teste Three.js</title>
+<style>
+  body { margin: 0; background: #000; }
+  canvas { display: block; }
+  #info {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: white;
+    font-family: monospace;
+    background: rgba(0,0,0,0.7);
+    padding: 10px;
+    border-radius: 5px;
+  }
+  .success { color: #0f0; }
+  .error { color: #f00; }
+</style>
+</head>
+<body>
+  <div id="info">
+    <div>Teste de Three.js</div>
+    <div id="status">Carregando...</div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r154/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r154/examples/js/controls/OrbitControls.min.js"></script>
+
+  <script>
+    const statusDiv = document.getElementById('status');
+    
+    // Verificar se THREE está carregado
+    if (typeof THREE === 'undefined') {
+      statusDiv.innerHTML = '<span class="error">❌ THREE.js NÃO carregou!</span><br>Verifique sua conexão com a internet.';
+    } else {
+      statusDiv.innerHTML = '<span class="success">✓ THREE.js carregado (v' + THREE.REVISION + ')</span>';
+      
+      // Verificar OrbitControls
+      if (typeof THREE.OrbitControls === 'undefined') {
+        statusDiv.innerHTML += '<br><span class="error">❌ OrbitControls NÃO carregou!</span>';
+      } else {
+        statusDiv.innerHTML += '<br><span class="success">✓ OrbitControls carregado</span>';
+      }
+      
+      // Testar criação de cena simples
+      try {
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+        
+        // Criar cubo
+        const geometry = new THREE.BoxGeometry();
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+        const cube = new THREE.Mesh(geometry, material);
+        scene.add(cube);
+        
+        camera.position.z = 5;
+        
+        // Animação
+        function animate() {
+          requestAnimationFrame(animate);
+          cube.rotation.x += 0.01;
+          cube.rotation.y += 0.01;
+          renderer.render(scene, camera);
+        }
+        animate();
+        
+        statusDiv.innerHTML += '<br><span class="success">✓ Renderização funcionando!</span>';
+        statusDiv.innerHTML += '<br><br>Se você vê um cubo verde girando,<br>o Three.js está funcionando perfeitamente!';
+        
+      } catch(e) {
+        statusDiv.innerHTML += '<br><span class="error">❌ Erro ao criar cena: ' + e.message + '</span>';
+      }
+    }
+    
+    // Verificar WebGL
+    function checkWebGL() {
+      try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (gl) {
+          statusDiv.innerHTML += '<br><span class="success">✓ WebGL disponível</span>';
+        } else {
+          statusDiv.innerHTML += '<br><span class="error">❌ WebGL não disponível!</span>';
+        }
+      } catch(e) {
+        statusDiv.innerHTML += '<br><span class="error">❌ Erro ao verificar WebGL</span>';
+      }
+    }
+    
+    setTimeout(checkWebGL, 100);
+  </script>
+</body>
+</html>
+

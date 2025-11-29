@@ -1,735 +1,1103 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Exoesqueleto - Reabilitação</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px;
-            min-height: 100vh;
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
-            color: white;
-            padding: 25px;
-            text-align: center;
-        }
-        
-        .header h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
-        }
-        
-        .header p {
-            opacity: 0.8;
-            font-size: 14px;
-        }
-        
-        .main-content {
-            display: grid;
-            grid-template-columns: 350px 1fr;
-            gap: 20px;
-            padding: 20px;
-        }
-        
-        .controls {
-            background: #f7fafc;
-            padding: 20px;
-            border-radius: 10px;
-            height: fit-content;
-        }
-        
-        .control-group {
-            margin-bottom: 25px;
-        }
-        
-        .control-group h3 {
-            color: #2d3748;
-            margin-bottom: 15px;
-            font-size: 16px;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 8px;
-        }
-        
-        .radio-group {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        
-        .radio-label {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
-        
-        .radio-label input {
-            margin-right: 5px;
-        }
-        
-        .input-row {
-            display: grid;
-            grid-template-columns: 120px 1fr;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-        
-        .input-row label {
-            font-size: 14px;
-            color: #4a5568;
-        }
-        
-        .input-row input {
-            padding: 8px;
-            border: 2px solid #e2e8f0;
-            border-radius: 5px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-        
-        .input-row input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        .checkbox-label input {
-            margin-right: 8px;
-        }
-        
-        .slider-container {
-            margin-top: 10px;
-        }
-        
-        .slider-container input[type="range"] {
-            width: 100%;
-            margin-top: 5px;
-        }
-        
-        .slider-value {
-            text-align: center;
-            color: #667eea;
-            font-weight: bold;
-            margin-top: 5px;
-        }
-        
-        .button-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        .btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-        
-        .btn-secondary {
-            background: #ffc107;
-            color: #2d3748;
-        }
-        
-        .btn-secondary:hover {
-            background: #ffb300;
-        }
-        
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .visualization {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-        }
-        
-        .canvas-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .canvas-wrapper {
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        
-        .canvas-wrapper h4 {
-            background: #f7fafc;
-            padding: 10px;
-            margin: 0;
-            font-size: 14px;
-            color: #2d3748;
-            border-bottom: 2px solid #e2e8f0;
-        }
-        
-        canvas {
-            display: block;
-            width: 100%;
-            background: white;
-        }
-        
-        .status-bar {
-            background: #2d3748;
-            color: white;
-            padding: 12px 20px;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .status-icon {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #48bb78;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
-        .info-panel {
-            background: #edf2f7;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-            font-size: 12px;
-            line-height: 1.6;
-        }
-        
-        .info-panel h4 {
-            color: #2d3748;
-            margin-bottom: 10px;
-        }
-        
-        .limits-table {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        
-        .limit-item {
-            background: white;
-            padding: 8px;
-            border-radius: 5px;
-            font-size: 11px;
-        }
-        
-        .limit-item strong {
-            color: #667eea;
-        }
-    </style>
+<meta charset="utf-8" />
+<title>ExoRehab 3D — Simulador de Exoesqueleto para Fisioterapia</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  
+  :root { 
+    --bg:#0a0e1a; 
+    --panel:#0f172a88; 
+    --accent:#6366f1; 
+    --accent-hover:#4f46e5;
+    --success:#10b981;
+    --warning:#f59e0b;
+    --danger:#ef4444;
+    --muted:#94a3b8; 
+    --card:#0f172add; 
+    --border:rgba(255,255,255,0.06);
+  }
+  
+  * { box-sizing: border-box; }
+  
+  body { 
+    margin:0; 
+    font-family: 'Inter', system-ui, Arial; 
+    background: linear-gradient(135deg, #0a0e1a 0%, #1e1b4b 100%);
+    color:#e6eef8; 
+    overflow:hidden; 
+  }
+  
+  #ui { 
+    position: absolute; 
+    left:16px; 
+    top:16px; 
+    width:380px; 
+    padding:20px; 
+    border-radius:16px; 
+    background:linear-gradient(180deg,rgba(15,23,42,0.95),rgba(7,16,37,0.98)); 
+    border:1px solid var(--border); 
+    backdrop-filter: blur(12px); 
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    z-index:10;
+    transition: all 0.3s ease;
+  }
+  
+  #ui:hover {
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  }
+  
+  #ui h2 { 
+    margin:0 0 8px 0; 
+    font-size:20px;
+    font-weight:700;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .subtitle {
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:16px;
+    font-weight:500;
+  }
+  
+  .section {
+    background: rgba(15,23,42,0.5);
+    padding:12px;
+    border-radius:10px;
+    margin-bottom:12px;
+    border:1px solid rgba(255,255,255,0.03);
+  }
+  
+  .section-title {
+    font-size:11px;
+    font-weight:600;
+    color:#a5b4fc;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    margin-bottom:10px;
+  }
+  
+  label {
+    display:block; 
+    font-size:12px; 
+    color:var(--muted); 
+    margin-bottom:6px;
+    font-weight:500;
+  }
+  
+  .row {
+    display:flex; 
+    gap:8px; 
+    align-items:center; 
+    margin-bottom:10px;
+  }
+  
+  .col { flex:1; }
+  
+  input[type="range"] {
+    width:100%;
+    height:6px;
+    border-radius:3px;
+    background: linear-gradient(to right, var(--accent), var(--accent-hover));
+    outline:none;
+    opacity:0.8;
+    transition:opacity 0.2s;
+  }
+  
+  input[type="range"]:hover {
+    opacity:1;
+  }
+  
+  select, button, input[type="checkbox"] {
+    padding:8px 12px; 
+    border-radius:8px; 
+    border:none;
+    font-size:13px;
+    font-weight:500;
+    transition: all 0.2s ease;
+  }
+  
+  select {
+    background: rgba(30,41,59,0.8);
+    color:#e6eef8;
+    cursor:pointer;
+    width:100%;
+    border:1px solid rgba(255,255,255,0.1);
+  }
+  
+  select:hover {
+    background: rgba(30,41,59,1);
+    border-color:rgba(255,255,255,0.2);
+  }
+  
+  button {
+    cursor:pointer; 
+    font-weight:600; 
+    background:var(--accent); 
+    color:white;
+    border:none;
+    position:relative;
+    overflow:hidden;
+  }
+  
+  button:hover:not(:disabled) {
+    background:var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99,102,241,0.4);
+  }
+  
+  button:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  
+  button:disabled {
+    opacity:0.5;
+    cursor:not-allowed;
+  }
+  
+  button.secondary {
+    background:#334155;
+  }
+  
+  button.secondary:hover:not(:disabled) {
+    background:#475569;
+  }
+  
+  #exportBtn {
+    background:var(--success);
+    width:100%;
+  }
+  
+  #exportBtn:hover {
+    background:#059669;
+    box-shadow: 0 4px 12px rgba(16,185,129,0.4);
+  }
+  
+  #info {
+    position:absolute; 
+    right:16px; 
+    top:16px; 
+    width:240px; 
+    padding:16px; 
+    border-radius:16px; 
+    background:rgba(15,23,42,0.95); 
+    border:1px solid var(--border); 
+    font-size:13px; 
+    z-index:9;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  
+  #info > div {
+    padding:6px 0;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+  }
+  
+  #info > div:last-child {
+    border-bottom:none;
+  }
+  
+  .info-label {
+    color:var(--muted);
+    font-size:11px;
+    font-weight:500;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+  }
+  
+  .info-value {
+    color:#e6eef8;
+    font-size:16px;
+    font-weight:600;
+    margin-top:2px;
+  }
+  
+  a.small {
+    color:#93c5fd; 
+    font-size:12px; 
+    text-decoration:none;
+  }
+  
+  a.small:hover {
+    color:#bfdbfe;
+    text-decoration:underline;
+  }
+  
+  .small-note {
+    font-size:11px; 
+    color:var(--muted); 
+    margin-top:8px;
+    line-height:1.5;
+  }
+  
+  .badge {
+    display:inline-block;
+    padding:4px 8px;
+    border-radius:6px;
+    font-size:11px;
+    font-weight:600;
+    background:rgba(99,102,241,0.2);
+    color:#a5b4fc;
+    margin-left:8px;
+  }
+  
+  .badge.success {
+    background:rgba(16,185,129,0.2);
+    color:#6ee7b7;
+  }
+  
+  .loading-indicator {
+    display:none;
+    text-align:center;
+    padding:8px;
+    color:var(--accent);
+    font-size:12px;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  
+  .loading-indicator.active {
+    display:block;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity:1; }
+    50% { opacity:0.5; }
+  }
+  
+  .therapy-info {
+    background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(99,102,241,0.1));
+    padding:12px;
+    border-radius:10px;
+    font-size:11px;
+    line-height:1.6;
+    color:#cbd5e1;
+    border:1px solid rgba(16,185,129,0.2);
+    margin-top:12px;
+  }
+  
+  .value-display {
+    background:rgba(99,102,241,0.15);
+    padding:4px 8px;
+    border-radius:6px;
+    text-align:center;
+    font-weight:600;
+    color:#a5b4fc;
+    min-width:64px;
+  }
+  
+  /* Canvas 3D */
+  canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+  }
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🦾 Simulador de Exoesqueleto para Reabilitação</h1>
-            <p>Planejamento de trajetória com A* respeitando limites fisiológicos humanos</p>
-        </div>
-        
-        <div class="main-content">
-            <div class="controls">
-                <div class="control-group">
-                    <h3>Tipo de Membro</h3>
-                    <div class="radio-group">
-                        <label class="radio-label">
-                            <input type="radio" name="limb" value="arm" checked>
-                            Braço
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="limb" value="leg">
-                            Perna
-                        </label>
-                    </div>
-                </div>
-                
-                <div class="control-group">
-                    <h3>Ângulos Iniciais</h3>
-                    <div class="input-row">
-                        <label>θ1 (proximal):</label>
-                        <input type="number" id="t1i" value="20" step="5">
-                    </div>
-                    <div class="input-row">
-                        <label>θ2 (distal):</label>
-                        <input type="number" id="t2i" value="-20" step="5">
-                    </div>
-                </div>
-                
-                <div class="control-group">
-                    <h3>Ângulos Finais</h3>
-                    <div class="input-row">
-                        <label>θ1 (proximal):</label>
-                        <input type="number" id="t1f" value="100" step="5">
-                    </div>
-                    <div class="input-row">
-                        <label>θ2 (distal):</label>
-                        <input type="number" id="t2f" value="-80" step="5">
-                    </div>
-                </div>
-                
-                <div class="control-group">
-                    <h3>Opções</h3>
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="addObstacle" checked>
-                        Adicionar área de dor
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="addPain">
-                        Zona de desconforto
-                    </label>
-                    
-                    <div class="slider-container">
-                        <label>Velocidade da Animação:</label>
-                        <input type="range" id="speed" min="10" max="200" value="50">
-                        <div class="slider-value" id="speedValue">50 ms</div>
-                    </div>
-                </div>
-                
-                <div class="button-group">
-                    <button class="btn btn-primary" id="simulateBtn">▶ Simular</button>
-                    <button class="btn btn-secondary" id="pauseBtn" disabled>⏸ Pausar</button>
-                </div>
-                
-                <div class="info-panel">
-                    <h4>📋 Limites Fisiológicos</h4>
-                    <div class="limits-table" id="limitsInfo">
-                        <div class="limit-item">
-                            <strong>Braço - Ombro:</strong><br>0° a 180°
-                        </div>
-                        <div class="limit-item">
-                            <strong>Braço - Cotovelo:</strong><br>-145° a 0°
-                        </div>
-                        <div class="limit-item">
-                            <strong>Perna - Quadril:</strong><br>-15° a 125°
-                        </div>
-                        <div class="limit-item">
-                            <strong>Perna - Joelho:</strong><br>-135° a 0°
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="visualization">
-                <div class="canvas-container">
-                    <div class="canvas-wrapper">
-                        <h4>Animação do Movimento</h4>
-                        <canvas id="animCanvas" width="400" height="400"></canvas>
-                    </div>
-                    <div class="canvas-wrapper">
-                        <h4>Trajetória Completa</h4>
-                        <canvas id="pathCanvas" width="400" height="400"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="status-bar">
-            <div class="status-icon"></div>
-            <span id="status">Pronto para simular</span>
-        </div>
+  <div id="ui">
+    <h2>ExoRehab 3D</h2>
+    <div class="subtitle">Simulador de Exoesqueleto para Fisioterapia</div>
+
+    <div class="section">
+      <div class="section-title">Tipo de Exoesqueleto</div>
+      <select id="exoType">
+        <option value="arm">Braço (Reabilitação de Membro Superior)</option>
+        <option value="leg">Perna (Reabilitação de Marcha)</option>
+      </select>
     </div>
 
-    <script>
-        // Configurações
-        const PHYSIOLOGICAL_LIMITS = {
-            arm: { t1: [0, 180], t2: [-145, 0] },
-            leg: { t1: [-15, 125], t2: [-135, 0] }
-        };
+    <div class="section">
+      <div class="section-title">Algoritmo de Planejamento</div>
+      <select id="mode">
+        <option value="astar">A* (Otimizado com Desvio de Obstáculos)</option>
+        <option value="interp">Interpolação Linear Simples</option>
+      </select>
+    </div>
 
-        const L1 = 150; // pixels
-        const L2 = 100; // pixels
-        
-        let animationFrame = null;
-        let currentPath = null;
-        let currentFrame = 0;
-        let isAnimating = false;
+    <div class="section">
+      <div class="section-title">Posição Inicial <span class="badge">Repouso</span></div>
+      <div class="row">
+        <div class="col">
+          <label id="label_t1i">θ1 (Ombro/Quadril)</label>
+          <input id="t1i" type="range" min="0" max="180" step="1" value="20">
+        </div>
+        <div class="value-display" id="t1i_val">20°</div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <label id="label_t2i">θ2 (Cotovelo/Joelho)</label>
+          <input id="t2i" type="range" min="-145" max="0" step="1" value="-20">
+        </div>
+        <div class="value-display" id="t2i_val">-20°</div>
+      </div>
+    </div>
 
-        // Elementos DOM
-        const animCanvas = document.getElementById('animCanvas');
-        const pathCanvas = document.getElementById('pathCanvas');
-        const animCtx = animCanvas.getContext('2d');
-        const pathCtx = pathCanvas.getContext('2d');
-        const statusEl = document.getElementById('status');
-        const speedSlider = document.getElementById('speed');
-        const speedValue = document.getElementById('speedValue');
-        const simulateBtn = document.getElementById('simulateBtn');
-        const pauseBtn = document.getElementById('pauseBtn');
+    <div class="section">
+      <div class="section-title">Posição Final <span class="badge success">Objetivo</span></div>
+      <div class="row">
+        <div class="col">
+          <label id="label_t1f">θ1 (Ombro/Quadril)</label>
+          <input id="t1f" type="range" min="0" max="180" step="1" value="100">
+        </div>
+        <div class="value-display" id="t1f_val">100°</div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <label id="label_t2f">θ2 (Cotovelo/Joelho)</label>
+          <input id="t2f" type="range" min="-145" max="0" step="1" value="30">
+        </div>
+        <div class="value-display" id="t2f_val">30°</div>
+      </div>
+    </div>
 
-        // Cinemática direta
-        function forwardKinematics(t1, t2) {
-            const t1Rad = t1 * Math.PI / 180;
-            const t2Rad = t2 * Math.PI / 180;
-            
-            const x1 = L1 * Math.cos(t1Rad);
-            const y1 = L1 * Math.sin(t1Rad);
-            const x2 = x1 + L2 * Math.cos(t1Rad + t2Rad);
-            const y2 = y1 + L2 * Math.sin(t1Rad + t2Rad);
-            
-            return { end: {x: x2, y: y2}, joint: {x: x1, y: y1} };
+    <div class="section">
+      <div class="section-title">Controles</div>
+      <div class="row">
+        <div class="col">
+          <label>Velocidade da Simulação</label>
+          <input id="speed" type="range" min="10" max="200" step="5" value="35">
+        </div>
+        <div class="value-display" id="speed_val">35ms</div>
+      </div>
+      
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        <button id="btnSim" style="flex:2;">▶ Simular Movimento</button>
+        <button id="btnPause" class="secondary" style="flex:1;">⏸</button>
+        <button id="btnReset" class="secondary" style="flex:1;">🔄</button>
+      </div>
+      
+      <div class="loading-indicator" id="loadingIndicator">
+        Planejando trajetória com A*...
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Visualização</div>
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <label style="display:flex;align-items:center;gap:6px; cursor:pointer;">
+          <input id="cbObstacle" type="checkbox" checked style="cursor:pointer;"> 
+          <span style="font-size:12px;">Obstáculos</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:6px; cursor:pointer;">
+          <input id="cbGrid" type="checkbox" checked style="cursor:pointer;"> 
+          <span style="font-size:12px;">Grade</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="section">
+      <button id="exportBtn">⤓ Exportar Trajetória (CSV)</button>
+    </div>
+
+    <div class="therapy-info">
+      <strong>💡 Sobre o Simulador:</strong><br>
+      Este sistema utiliza o algoritmo A* para planejar trajetórias otimizadas de movimento, considerando limitações biomecânicas e obstáculos. Ideal para planejamento de sessões de fisioterapia assistida por robótica.
+    </div>
+  </div>
+
+  <div id="info">
+    <div>
+      <div class="info-label">Status da Simulação</div>
+      <div class="info-value" id="frameInfo">Pronto</div>
+    </div>
+    <div>
+      <div class="info-label" id="label_cur_t1">Ângulo Ombro</div>
+      <div class="info-value" id="curT1">20.0°</div>
+    </div>
+    <div>
+      <div class="info-label" id="label_cur_t2">Ângulo Cotovelo</div>
+      <div class="info-value" id="curT2">-20.0°</div>
+    </div>
+    <div>
+      <div class="info-label">Passos Planejados</div>
+      <div class="info-value" id="stepsCount">0</div>
+    </div>
+    <div>
+      <div class="info-label">Tipo de Membro</div>
+      <div class="info-value" id="exoTypeDisplay">Braço</div>
+    </div>
+  </div>
+
+  <!-- Three.js + OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r154/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r154/examples/js/controls/OrbitControls.min.js"></script>
+
+<script>
+/* ================= CONFIGURAÇÕES ================= */
+var LINK1 = 0.35; // meters (visual scale) - braço superior / coxa
+var LINK2 = 0.25; // antebraço / canela
+var OBST_RADIUS = 0.10; // m
+var OBST_POS;
+
+const TH1_MIN = 0, TH1_MAX = 180, TH1_STEP = 5;
+const TH2_MIN = -145, TH2_MAX = 0, TH2_STEP = 5;
+
+const TH1 = []; for(let a=TH1_MIN;a<=TH1_MAX;a+=TH1_STEP) TH1.push(a);
+const TH2 = []; for(let a=TH2_MIN;a<=TH2_MAX;a+=TH2_STEP) TH2.push(a);
+
+/* ========= Scene / Renderer / Camera ========= */
+let scene, camera, renderer, controls;
+let armRoot, link1Container, link2Container, link1Mesh, link2Mesh, joint1Mesh, joint2Mesh;
+let gridHelper, obstacleMesh, humanBodyMesh;
+let frames = [], curFrame = 0, playing=false, paused=false, playTimer=null;
+let currentExoType = 'arm'; // 'arm' or 'leg'
+
+/* small utility */
+function degToRad(d){ return d * Math.PI/180; }
+function radToDeg(r){ return r * 180/Math.PI; }
+
+/* ======== Scene setup ======== */
+function initScene(){
+  // Definir OBST_POS agora que THREE está carregado
+  OBST_POS = new THREE.Vector3(0.40, 0.0, 0.0);
+  
+  renderer = new THREE.WebGLRenderer({antialias:true});
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x0a0e1a);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  document.body.appendChild(renderer.domElement);
+
+  scene = new THREE.Scene();
+  // Adicionar fog para profundidade
+  scene.fog = new THREE.Fog(0x0a0e1a, 2, 10);
+  
+  camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.01, 50);
+  camera.position.set(0.7, 0.5, 1.2);
+
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.target.set(0.25, 0.05, 0);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+  controls.update();
+
+  // Iluminação aprimorada
+  const amb = new THREE.AmbientLight(0xffffff, 0.5); 
+  scene.add(amb);
+  
+  const dir = new THREE.DirectionalLight(0xffffff, 0.8); 
+  dir.position.set(2, 3, 2);
+  dir.castShadow = true;
+  dir.shadow.camera.near = 0.1;
+  dir.shadow.camera.far = 10;
+  dir.shadow.camera.left = -2;
+  dir.shadow.camera.right = 2;
+  dir.shadow.camera.top = 2;
+  dir.shadow.camera.bottom = -2;
+  scene.add(dir);
+  
+  // Luz de preenchimento
+  const fillLight = new THREE.DirectionalLight(0x6366f1, 0.3);
+  fillLight.position.set(-2, 1, -2);
+  scene.add(fillLight);
+
+  gridHelper = new THREE.GridHelper(1.2, 12, 0x334155, 0x1e293b); 
+  gridHelper.receiveShadow = true;
+  scene.add(gridHelper);
+
+  // Base do corpo (simulação de tronco)
+  const bodyGeom = new THREE.CylinderGeometry(0.08, 0.08, 0.15, 16);
+  const bodyMat = new THREE.MeshStandardMaterial({ 
+    color: 0x475569, 
+    metalness: 0.1, 
+    roughness: 0.8 
+  });
+  humanBodyMesh = new THREE.Mesh(bodyGeom, bodyMat);
+  humanBodyMesh.position.set(0, 0.075, 0);
+  humanBodyMesh.castShadow = true;
+  humanBodyMesh.receiveShadow = true;
+  scene.add(humanBodyMesh);
+
+  // Grupo do exoesqueleto
+  armRoot = new THREE.Group(); 
+  scene.add(armRoot);
+
+  buildExoskeleton('arm');
+
+  // Obstáculo (esfera)
+  const obsGeom = new THREE.SphereGeometry(OBST_RADIUS, 32, 24);
+  const obsMat = new THREE.MeshStandardMaterial({
+    color: 0xff4444, 
+    transparent: true, 
+    opacity: 0.45,
+    metalness: 0.3,
+    roughness: 0.4,
+    emissive: 0xff2222,
+    emissiveIntensity: 0.2
+  });
+  obstacleMesh = new THREE.Mesh(obsGeom, obsMat);
+  obstacleMesh.position.copy(OBST_POS);
+  obstacleMesh.castShadow = true;
+  scene.add(obstacleMesh);
+
+  window.addEventListener('resize', onResize);
+}
+
+/* ======== Construir modelo 3D do exoesqueleto ======== */
+function buildExoskeleton(type) {
+  // Limpar exoesqueleto anterior
+  while(armRoot.children.length > 0) {
+    armRoot.remove(armRoot.children[0]);
+  }
+
+  // Cores e materiais baseados no tipo
+  const linkMat = new THREE.MeshStandardMaterial({ 
+    color: type === 'arm' ? 0x6366f1 : 0x10b981,
+    metalness: 0.4, 
+    roughness: 0.5,
+    emissive: type === 'arm' ? 0x6366f1 : 0x10b981,
+    emissiveIntensity: 0.1
+  });
+  
+  const jointMat = new THREE.MeshStandardMaterial({ 
+    color: 0xe2e8f0,
+    metalness: 0.6,
+    roughness: 0.3 
+  });
+  
+  const strutMat = new THREE.MeshStandardMaterial({
+    color: 0x1e293b,
+    metalness: 0.7,
+    roughness: 0.4
+  });
+
+  // Ajustar dimensões baseado no tipo
+  if (type === 'leg') {
+    LINK1 = 0.45; // coxa maior
+    LINK2 = 0.40; // canela
+  } else {
+    LINK1 = 0.35; // braço
+    LINK2 = 0.25; // antebraço
+  }
+
+  const radius1 = type === 'leg' ? 0.025 : 0.02;
+  const radius2 = type === 'leg' ? 0.022 : 0.018;
+
+  // Link 1 - estrutura de exoesqueleto realista
+  link1Container = new THREE.Group();
+  
+  // Junta proximal (ombro/quadril)
+  joint1Mesh = new THREE.Mesh(
+    new THREE.SphereGeometry(type === 'leg' ? 0.04 : 0.035, 20, 20), 
+    jointMat
+  );
+  joint1Mesh.position.set(0, 0, 0);
+  joint1Mesh.castShadow = true;
+  link1Container.add(joint1Mesh);
+
+  // Link principal 1
+  const geo1 = new THREE.CylinderGeometry(radius1, radius1, LINK1, 24);
+  link1Mesh = new THREE.Mesh(geo1, linkMat);
+  link1Mesh.rotation.z = Math.PI/2;
+  link1Mesh.position.set(LINK1/2, 0, 0);
+  link1Mesh.castShadow = true;
+  link1Container.add(link1Mesh);
+
+  // Estruturas de suporte (struts)
+  const strutGeo = new THREE.CylinderGeometry(0.008, 0.008, LINK1 * 0.8, 8);
+  const strut1 = new THREE.Mesh(strutGeo, strutMat);
+  strut1.rotation.z = Math.PI/2;
+  strut1.position.set(LINK1/2, 0.03, 0);
+  strut1.castShadow = true;
+  link1Container.add(strut1);
+
+  const strut2 = new THREE.Mesh(strutGeo, strutMat);
+  strut2.rotation.z = Math.PI/2;
+  strut2.position.set(LINK1/2, -0.03, 0);
+  strut2.castShadow = true;
+  link1Container.add(strut2);
+
+  // Link 2 container (cotovelo/joelho)
+  link2Container = new THREE.Group();
+  link2Container.position.set(LINK1, 0, 0);
+
+  // Junta do meio (cotovelo/joelho)
+  const joint2Size = type === 'leg' ? 0.038 : 0.032;
+  joint2Mesh = new THREE.Mesh(
+    new THREE.SphereGeometry(joint2Size, 16, 16), 
+    jointMat
+  );
+  joint2Mesh.position.set(0, 0, 0);
+  joint2Mesh.castShadow = true;
+  link2Container.add(joint2Mesh);
+
+  // Link principal 2
+  const geo2 = new THREE.CylinderGeometry(radius2, radius2, LINK2, 20);
+  link2Mesh = new THREE.Mesh(geo2, linkMat);
+  link2Mesh.rotation.z = Math.PI/2;
+  link2Mesh.position.set(LINK2/2, 0, 0);
+  link2Mesh.castShadow = true;
+  link2Container.add(link2Mesh);
+
+  // End effector (mão/pé)
+  const endEffectorGeom = type === 'leg' 
+    ? new THREE.BoxGeometry(0.08, 0.04, 0.06) 
+    : new THREE.SphereGeometry(0.03, 12, 12);
+  const endEffector = new THREE.Mesh(endEffectorGeom, jointMat);
+  endEffector.position.set(LINK2, 0, 0);
+  endEffector.castShadow = true;
+  link2Container.add(endEffector);
+
+  link1Container.add(link2Container);
+  armRoot.add(link1Container);
+
+  // Atualizar posição do corpo base
+  if (type === 'leg') {
+    humanBodyMesh.position.set(0, 0.3, 0);
+    armRoot.position.set(0, 0.3, 0); // perna começa mais alto
+  } else {
+    humanBodyMesh.position.set(0, 0.075, 0);
+    armRoot.position.set(0, 0, 0);
+  }
+}
+
+/* ======== Render loop ======== */
+function render(){
+  requestAnimationFrame(render);
+  controls.update(); // para damping
+  renderer.render(scene, camera);
+}
+
+/* ======== Window resize ======== */
+function onResize(){
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+/* ======== Update arm orientation for angles (deg) ======== */
+function updateArmPose(t1_deg, t2_deg){
+  // link1Container rotates about Z (in-plane)
+  link1Container.rotation.z = degToRad(t1_deg);
+  // link2Container rotates relative by t2
+  link2Container.rotation.z = degToRad(t2_deg);
+}
+
+/* ======== Forward kinematics (returns joint positions in world coords) ======== */
+function fkWorld(theta1_deg, theta2_deg){
+  const t1 = degToRad(theta1_deg);
+  const t2 = degToRad(theta2_deg);
+  // compute positions in plane (x,y)
+  const x1 = LINK1 * Math.cos(t1);
+  const y1 = LINK1 * Math.sin(t1);
+  const x2 = x1 + LINK2 * Math.cos(t1 + t2);
+  const y2 = y1 + LINK2 * Math.sin(t1 + t2);
+  return {
+    shoulder: new THREE.Vector3(0,0,0),
+    elbow: new THREE.Vector3(x1, y1, 0),
+    hand: new THREE.Vector3(x2, y2, 0)
+  };
+}
+
+/* ======== Collision utils: distance point-segment in 3D (capsule check) ======== */
+function pointSegmentDistance(p, a, b){
+  const ab = new THREE.Vector3().subVectors(b,a);
+  const ap = new THREE.Vector3().subVectors(p,a);
+  const t = THREE.MathUtils.clamp(ap.dot(ab) / ab.lengthSq(), 0, 1);
+  const proj = new THREE.Vector3().copy(a).addScaledVector(ab, t);
+  return p.distanceTo(proj);
+}
+
+/* capsule vs sphere collision: capsule is segment a-b with radius r_caps, sphere center c radius r_s */
+function capsuleSphereCollision(a,b, r_caps, c, r_s){
+  const d = pointSegmentDistance(c, a, b);
+  return d <= (r_caps + r_s);
+}
+
+/* ======== A* implementation (joint space) ======== */
+function findIndex(arr, val){
+  let best=0, bd=Infinity;
+  for(let i=0;i<arr.length;i++){
+    const d = Math.abs(arr[i]-val);
+    if(d<bd){ bd=d; best=i; }
+  }
+  return best;
+}
+function key(i,j){ return i+','+j; }
+
+function astarPlan(start_deg, goal_deg){
+  const si = findIndex(TH1, start_deg[0]);
+  const sj = findIndex(TH2, start_deg[1]);
+  const gi = findIndex(TH1, goal_deg[0]);
+  const gj = findIndex(TH2, goal_deg[1]);
+
+  const startKey = key(si,sj);
+  const open = new TinyHeap((a,b)=>a.f-b.f);
+  const gscore = {}; gscore[startKey]=0;
+  const came = {};
+
+  open.push({i:si,j:sj,f:heuristic(si,sj,gi,gj)});
+
+  const visited = new Set();
+
+  while(open.size()>0){
+    const cur = open.pop();
+    const ci=cur.i, cj=cur.j, ckey=key(ci,cj);
+    if(ci===gi && cj===gj){
+      // reconstruct
+      const path = [];
+      let pk = ckey;
+      while(pk){
+        const [pi,pj] = pk.split(',').map(x=>parseInt(x));
+        path.push([TH1[pi], TH2[pj]]);
+        pk = came[pk];
+      }
+      path.reverse();
+      return path;
+    }
+    visited.add(ckey);
+    // neighbors (8-neigh)
+    for(let di=-1;di<=1;di++){
+      for(let dj=-1;dj<=1;dj++){
+        if(di===0 && dj===0) continue;
+        const ni=ci+di, nj=cj+dj;
+        if(ni<0 || ni>=TH1.length || nj<0 || nj>=TH2.length) continue;
+        const nkey = key(ni,nj);
+        if(visited.has(nkey)) continue;
+
+        // collision check: check both link segments as capsules
+        const theta1 = TH1[ni], theta2 = TH2[nj];
+        const joints = fkWorld(theta1, theta2);
+        // capsule radii (approx)
+        const r_caps = 0.035; // 3.5cm thickness
+        const c = obstacleMesh.position.clone();
+        // link1 segment: shoulder->elbow
+        const segA = joints.shoulder, segB = joints.elbow;
+        if(capsuleSphereCollision(segA, segB, r_caps, c, OBST_RADIUS)) continue;
+        // link2 segment: elbow->hand
+        const segC = joints.elbow, segD = joints.hand;
+        if(capsuleSphereCollision(segC, segD, r_caps, c, OBST_RADIUS)) continue;
+
+        const tentative = gscore[ckey] + costBetween(ci,cj,ni,nj);
+        if(tentative < (gscore[nkey] ?? Infinity)){
+          gscore[nkey] = tentative;
+          came[nkey] = ckey;
+          open.push({i:ni,j:nj,f: tentative + heuristic(ni,nj,gi,gj)});
         }
+      }
+    }
+  }
+  return null;
+}
 
-        // Transformar coordenadas para canvas
-        function toCanvasCoords(x, y, canvas) {
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            return {
-                x: centerX + x,
-                y: centerY - y
-            };
-        }
+function heuristic(i,j,gi,gj){
+  const r1 = degToRad(TH1[i]-TH1[gi]);
+  const r2 = degToRad(TH2[j]-TH2[gj]);
+  return Math.hypot(r1,r2);
+}
+function costBetween(i1,j1,i2,j2){
+  const r1a = degToRad(TH1[i1]), r1b = degToRad(TH1[i2]);
+  const r2a = degToRad(TH2[j1]), r2b = degToRad(TH2[j2]);
+  return Math.abs(r1a-r1b) + Math.abs(r2a-r2b);
+}
 
-        // Desenhar membro
-        function drawLimb(ctx, t1, t2, color = '#667eea', lineWidth = 3, alpha = 1.0) {
-            const pos = forwardKinematics(t1, t2);
-            const canvas = ctx.canvas;
-            
-            ctx.save();
-            ctx.globalAlpha = alpha;
-            ctx.strokeStyle = color;
-            ctx.fillStyle = color;
-            ctx.lineWidth = lineWidth;
-            ctx.lineCap = 'round';
-            
-            // Base
-            const base = toCanvasCoords(0, 0, canvas);
-            ctx.beginPath();
-            ctx.arc(base.x, base.y, 6, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Segmento proximal
-            const joint = toCanvasCoords(pos.joint.x, pos.joint.y, canvas);
-            ctx.beginPath();
-            ctx.moveTo(base.x, base.y);
-            ctx.lineTo(joint.x, joint.y);
-            ctx.stroke();
-            
-            ctx.beginPath();
-            ctx.arc(joint.x, joint.y, 5, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Segmento distal
-            const end = toCanvasCoords(pos.end.x, pos.end.y, canvas);
-            ctx.beginPath();
-            ctx.moveTo(joint.x, joint.y);
-            ctx.lineTo(end.x, end.y);
-            ctx.stroke();
-            
-            ctx.beginPath();
-            ctx.arc(end.x, end.y, 5, 0, Math.PI * 2);
-            ctx.fill();
-            
-            ctx.restore();
-            
-            return pos.end;
-        }
+/* ===== Tiny min-heap for A* ===== */
+function TinyHeap(cmp){ this.data=[]; this.cmp=cmp||((a,b)=>a-b); }
+TinyHeap.prototype.size=function(){return this.data.length;}
+TinyHeap.prototype.push=function(v){ this.data.push(v); this._siftUp(this.data.length-1); }
+TinyHeap.prototype.pop=function(){ if(this.data.length===0) return null; const t=this.data[0]; const l=this.data.pop(); if(this.data.length>0){ this.data[0]=l; this._siftDown(0);} return t; }
+TinyHeap.prototype._siftUp=function(i){ const data=this.data, cmp=this.cmp; while(i>0){ const p=Math.floor((i-1)/2); if(cmp(data[i],data[p])<0){ [data[p],data[i]]=[data[i],data[p]]; i=p; } else break;} }
+TinyHeap.prototype._siftDown=function(i){ const data=this.data, cmp=this.cmp; while(true){ let l=2*i+1, r=l+1, m=i; if(l<data.length && cmp(data[l], data[m])<0) m=l; if(r<data.length && cmp(data[r],data[m])<0) m=r; if(m!==i){ [data[i],data[m]]=[data[m],data[i]]; i=m; } else break; } }
 
-        // Desenhar obstáculo
-        function drawObstacle(ctx, centerX, centerY, radius) {
-            const canvas = ctx.canvas;
-            const pos = toCanvasCoords(centerX, centerY, canvas);
-            
-            ctx.save();
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
-            ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
-            ctx.lineWidth = 2;
-            
-            ctx.beginPath();
-            ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-            
-            ctx.fillStyle = '#e53e3e';
-            ctx.font = '10px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('Área de Dor', pos.x, pos.y);
-            
-            ctx.restore();
-        }
+/* ======== Catmull-Rom spline for smoothing frames (array of [t1,t2]) ======== */
+function catmullRomUpsample(path, upFactor=6){
+  if(path.length<3) return path.slice();
+  const out=[];
+  // duplicate ends for proper interpolation
+  const pts = [];
+  pts.push(path[0]);
+  for(const p of path) pts.push(p);
+  pts.push(path[path.length-1]);
 
-        // Desenhar grid
-        function drawGrid(ctx) {
-            const canvas = ctx.canvas;
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            
-            ctx.save();
-            ctx.strokeStyle = '#e2e8f0';
-            ctx.lineWidth = 0.5;
-            
-            // Linhas verticais
-            for (let x = 0; x < canvas.width; x += 50) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, canvas.height);
-                ctx.stroke();
-            }
-            
-            // Linhas horizontais
-            for (let y = 0; y < canvas.height; y += 50) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(canvas.width, y);
-                ctx.stroke();
-            }
-            
-            // Eixos principais
-            ctx.strokeStyle = '#4a5568';
-            ctx.lineWidth = 1;
-            
-            ctx.beginPath();
-            ctx.moveTo(centerX, 0);
-            ctx.lineTo(centerX, canvas.height);
-            ctx.stroke();
-            
-            ctx.beginPath();
-            ctx.moveTo(0, centerY);
-            ctx.lineTo(canvas.width, centerY);
-            ctx.stroke();
-            
-            ctx.restore();
-        }
+  for(let i=0;i<pts.length-3;i++){
+    const p0 = pts[i], p1 = pts[i+1], p2 = pts[i+2], p3 = pts[i+3];
+    for(let s=0;s<upFactor;s++){
+      const t = s / upFactor;
+      // Catmull-Rom basis
+      const t2 = t*t, t3 = t2*t;
+      const a = (-t3 + 2*t2 - t) * 0.5;
+      const b = (3*t3 -5*t2 + 2) * 0.5;
+      const c = (-3*t3 + 4*t2 + t) * 0.5;
+      const d = (t3 - t2) * 0.5;
+      const t1n = a*p0[0] + b*p1[0] + c*p2[0] + d*p3[0];
+      const t2n = a*p0[1] + b*p1[1] + c*p2[1] + d*p3[1];
+      out.push([t1n, t2n]);
+    }
+  }
+  out.push(path[path.length-1]);
+  return out;
+}
 
-        // Gerar trajetória linear simples (interpolação)
-        function generatePath(start, goal, steps = 30) {
-            const path = [];
-            for (let i = 0; i <= steps; i++) {
-                const t = i / steps;
-                const t1 = start.t1 + (goal.t1 - start.t1) * t;
-                const t2 = start.t2 + (goal.t2 - start.t2) * t;
-                path.push({ t1, t2 });
-            }
-            return path;
-        }
+/* ======== Play routine ======== */
+function playSequence(seq, speed){
+  frames = seq.slice();
+  document.getElementById('stepsCount').innerText = seq.length;
+  curFrame = 0;
+  playing = true;
+  paused = false;
+  if(playTimer) clearTimeout(playTimer);
+  stepPlay(speed);
+}
 
-        // Validar ângulos
-        function validateAngles(t1, t2, limbType) {
-            const limits = PHYSIOLOGICAL_LIMITS[limbType];
-            if (t1 < limits.t1[0] || t1 > limits.t1[1]) {
-                return { valid: false, msg: `θ1 fora dos limites: ${limits.t1[0]}° a ${limits.t1[1]}°` };
-            }
-            if (t2 < limits.t2[0] || t2 > limits.t2[1]) {
-                return { valid: false, msg: `θ2 fora dos limites: ${limits.t2[0]}° a ${limits.t2[1]}°` };
-            }
-            return { valid: true };
-        }
+function stepPlay(speed){
+  if(paused){ 
+    playTimer = setTimeout(()=>stepPlay(speed), 80); 
+    return; 
+  }
+  
+  if(curFrame >= frames.length){ 
+    playing = false; 
+    const totalFrames = frames.length;
+    document.getElementById('frameInfo').innerText = `Concluído (${totalFrames} frames)`;
+    
+    // Feedback visual de conclusão
+    setTimeout(() => {
+      document.getElementById('frameInfo').innerText = 'Pronto';
+    }, 3000);
+    return; 
+  }
+  
+  const [t1,t2] = frames[curFrame];
+  updateArmPose(t1,t2);
+  
+  // Atualizar UI com informações detalhadas
+  document.getElementById('curT1').innerText = `${t1.toFixed(1)}°`;
+  document.getElementById('curT2').innerText = `${t2.toFixed(1)}°`;
+  
+  const progress = ((curFrame + 1) / frames.length * 100).toFixed(0);
+  document.getElementById('frameInfo').innerText = `${curFrame+1} / ${frames.length} (${progress}%)`;
+  
+  curFrame++;
+  playTimer = setTimeout(()=>stepPlay(speed), speed);
+}
 
-        // Desenhar trajetória completa
-        function drawCompletePath(path) {
-            pathCtx.clearRect(0, 0, pathCanvas.width, pathCanvas.height);
-            drawGrid(pathCtx);
-            
-            if (document.getElementById('addObstacle').checked) {
-                drawObstacle(pathCtx, 100, 50, 40);
-            }
-            
-            // Desenhar todos os passos
-            const endPoints = [];
-            path.forEach((angles, i) => {
-                const alpha = 0.3;
-                const color = i === 0 ? '#48bb78' : i === path.length - 1 ? '#e53e3e' : '#cbd5e0';
-                drawLimb(pathCtx, angles.t1, angles.t2, color, 2, alpha);
-                
-                const pos = forwardKinematics(angles.t1, angles.t2);
-                endPoints.push(pos.end);
-            });
-            
-            // Desenhar trajetória do end-effector
-            pathCtx.save();
-            pathCtx.strokeStyle = '#667eea';
-            pathCtx.lineWidth = 2;
-            pathCtx.setLineDash([5, 5]);
-            pathCtx.beginPath();
-            
-            endPoints.forEach((pt, i) => {
-                const canvasPt = toCanvasCoords(pt.x, pt.y, pathCanvas);
-                if (i === 0) {
-                    pathCtx.moveTo(canvasPt.x, canvasPt.y);
-                } else {
-                    pathCtx.lineTo(canvasPt.x, canvasPt.y);
-                }
-            });
-            pathCtx.stroke();
-            
-            // Marcar início e fim
-            const start = toCanvasCoords(endPoints[0].x, endPoints[0].y, pathCanvas);
-            const end = toCanvasCoords(endPoints[endPoints.length-1].x, endPoints[endPoints.length-1].y, pathCanvas);
-            
-            pathCtx.fillStyle = '#48bb78';
-            pathCtx.beginPath();
-            pathCtx.arc(start.x, start.y, 8, 0, Math.PI * 2);
-            pathCtx.fill();
-            
-            pathCtx.fillStyle = '#e53e3e';
-            pathCtx.beginPath();
-            pathCtx.arc(end.x, end.y, 8, 0, Math.PI * 2);
-            pathCtx.fill();
-            
-            pathCtx.restore();
-            
-            // Texto
-            pathCtx.fillStyle = '#2d3748';
-            pathCtx.font = '12px Arial';
-            pathCtx.fillText(`${path.length} passos`, 10, 20);
-        }
+/* ======== Wire UI ======== */
+(function wireUI(){
+  const t1i = document.getElementById('t1i');
+  const t2i = document.getElementById('t2i');
+  const t1f = document.getElementById('t1f');
+  const t2f = document.getElementById('t2f');
+  const mode = document.getElementById('mode');
+  const exoType = document.getElementById('exoType');
+  const btnSim = document.getElementById('btnSim');
+  const btnPause = document.getElementById('btnPause');
+  const btnReset = document.getElementById('btnReset');
+  const cbObs = document.getElementById('cbObstacle');
+  const cbGrid = document.getElementById('cbGrid');
+  const speedEl = document.getElementById('speed');
+  const exportBtn = document.getElementById('exportBtn');
+  const loadingIndicator = document.getElementById('loadingIndicator');
 
-        // Animar
-        function animate() {
-            if (!isAnimating || !currentPath) return;
-            
-            animCtx.clearRect(0, 0, animCanvas.width, animCanvas.height);
-            drawGrid(animCtx);
-            
-            if (document.getElementById('addObstacle').checked) {
-                drawObstacle(animCtx, 100, 50, 40);
-            }
-            
-            // Desenhar trajetória passada com transparência
-            for (let i = 0; i < currentFrame; i++) {
-                drawLimb(animCtx, currentPath[i].t1, currentPath[i].t2, '#cbd5e0', 1, 0.2);
-            }
-            
-            // Desenhar posição atual
-            const current = currentPath[currentFrame];
-            drawLimb(animCtx, current.t1, current.t2, '#667eea', 4, 1.0);
-            
-            // Info
-            animCtx.fillStyle = '#2d3748';
-            animCtx.font = '12px Arial';
-            animCtx.fillText(`Frame: ${currentFrame + 1}/${currentPath.length}`, 10, 20);
-            animCtx.fillText(`θ1: ${current.t1.toFixed(1)}° | θ2: ${current.t2.toFixed(1)}°`, 10, 35);
-            
-            currentFrame++;
-            if (currentFrame >= currentPath.length) {
-                currentFrame = 0;
-            }
-            
-            statusEl.textContent = `Animando... Frame ${currentFrame}/${currentPath.length}`;
-            
-            animationFrame = setTimeout(animate, parseInt(speedSlider.value));
-        }
+  // Atualizar labels baseado no tipo de exoesqueleto
+  function updateLabels(type) {
+    currentExoType = type;
+    const isArm = type === 'arm';
+    
+    // Atualizar labels dos controles
+    document.getElementById('label_t1i').innerText = isArm ? 'θ1 (Ombro)' : 'θ1 (Quadril)';
+    document.getElementById('label_t2i').innerText = isArm ? 'θ2 (Cotovelo)' : 'θ2 (Joelho)';
+    document.getElementById('label_t1f').innerText = isArm ? 'θ1 (Ombro)' : 'θ1 (Quadril)';
+    document.getElementById('label_t2f').innerText = isArm ? 'θ2 (Cotovelo)' : 'θ2 (Joelho)';
+    
+    // Atualizar labels do painel de info
+    document.getElementById('label_cur_t1').innerText = isArm ? 'Ângulo Ombro' : 'Ângulo Quadril';
+    document.getElementById('label_cur_t2').innerText = isArm ? 'Ângulo Cotovelo' : 'Ângulo Joelho';
+    document.getElementById('exoTypeDisplay').innerText = isArm ? 'Braço' : 'Perna';
+    
+    // Reconstruir o exoesqueleto 3D
+    buildExoskeleton(type);
+    updateArmPose(parseFloat(t1i.value), parseFloat(t2i.value));
+  }
 
-        // Simular
-        function simulate() {
-            const limbType = document.querySelector('input[name="limb"]:checked').value;
-            const t1i = parseFloat(document.getElementById('t1i').value);
-            const t2i = parseFloat(document.getElementById('t2i').value);
-            const t1f = parseFloat(document.getElementById('t1f').value);
-            const t2f = parseFloat(document.getElementById('t2f').value);
-            
-            // Validar
-            const validStart = validateAngles(t1i, t2i, limbType);
-            if (!validStart.valid) {
-                alert('Ângulo inicial inválido: ' + validStart.msg);
-                return;
-            }
-            
-            const validEnd = validateAngles(t1f, t2f, limbType);
-            if (!validEnd.valid) {
-                alert('Ângulo final inválido: ' + validEnd.msg);
-                return;
-            }
-            
-            // Parar animação anterior
-            if (animationFrame) {
-                clearTimeout(animationFrame);
-            }
-            
-            // Gerar trajetória
-            statusEl.textContent = 'Planejando trajetória...';
-            currentPath = generatePath(
-                { t1: t1i, t2: t2i },
-                { t1: t1f, t2: t2f },
-                40
-            );
-            
-            // Desenhar trajetória completa
-            drawCompletePath(currentPath);
-            
-            // Iniciar animação
-            currentFrame = 0;
-            isAnimating = true;
-            pauseBtn.disabled = false;
-            statusEl.textContent = 'Animando...';
-            animate();
-        }
+  function updateDisplays(){
+    document.getElementById('t1i_val').innerText = t1i.value + '°';
+    document.getElementById('t2i_val').innerText = t2i.value + '°';
+    document.getElementById('t1f_val').innerText = t1f.value + '°';
+    document.getElementById('t2f_val').innerText = t2f.value + '°';
+    document.getElementById('speed_val').innerText = speedEl.value + 'ms';
+  }
+  
+  [t1i,t2i,t1f,t2f,speedEl].forEach(el => {
+    el.addEventListener('input', updateDisplays);
+  });
+  
+  // Atualizar pose em tempo real ao mover sliders iniciais
+  [t1i, t2i].forEach(el => {
+    el.addEventListener('input', () => {
+      if(!playing) {
+        updateArmPose(parseFloat(t1i.value), parseFloat(t2i.value));
+        document.getElementById('curT1').innerText = parseFloat(t1i.value).toFixed(1) + '°';
+        document.getElementById('curT2').innerText = parseFloat(t2i.value).toFixed(1) + '°';
+      }
+    });
+  });
+  
+  updateDisplays();
 
-        // Pausar
-        function pause() {
-            isAnimating = !isAnimating;
-            if (isAnimating) {
-                pauseBtn.textContent = '⏸ Pausar';
-                statusEl.textContent = 'Animando...';
-                animate();
-            } else {
-                pauseBtn.textContent = '▶ Continuar';
-                statusEl.textContent = 'Animação pausada';
-                if (animationFrame) {
-                    clearTimeout(animationFrame);
-                }
-            }
-        }
+  // Trocar tipo de exoesqueleto
+  exoType.addEventListener('change', () => {
+    updateLabels(exoType.value);
+  });
 
-        // Event listeners
-        simulateBtn.addEventListener('click', simulate);
-        pauseBtn.addEventListener('click', pause);
-        
-        speedSlider.addEventListener('input', (e) => {
-            speedValue.textContent = e.target.value + ' ms';
-        });
+  btnSim.addEventListener('click', async ()=>{
+    btnSim.disabled = true;
+    loadingIndicator.classList.add('active');
+    
+    const start = [parseFloat(t1i.value), parseFloat(t2i.value)];
+    const goal  = [parseFloat(t1f.value), parseFloat(t2f.value)];
+    const chosen = mode.value;
+    
+    // Pequeno delay para mostrar indicador de loading
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    if(chosen === 'interp'){
+      // linear interpolation
+      const N=140;
+      const seq=[];
+      for(let k=0;k<=N;k++){
+        const a=k/N;
+        seq.push([ start[0] + (goal[0]-start[0])*a, start[1] + (goal[1]-start[1])*a ]);
+      }
+      playSequence(seq, parseInt(speedEl.value));
+    } else {
+      // A* plan
+      const path = astarPlan(start, goal);
+      if(!path){ 
+        alert('⚠️ Nenhum caminho encontrado!\n\nO algoritmo A* não conseguiu planejar uma trajetória segura.\n\nSugestões:\n• Ajuste os ângulos inicial e final\n• Desabilite o obstáculo\n• Tente o modo de Interpolação Linear'); 
+        btnSim.disabled=false; 
+        loadingIndicator.classList.remove('active');
+        return; 
+      }
+      // smoothing upsample
+      const smooth = catmullRomUpsample(path, 6);
+      playSequence(smooth, parseInt(speedEl.value));
+    }
+    
+    loadingIndicator.classList.remove('active');
+    btnSim.disabled = false;
+  });
 
-        // Inicializar
-        drawGrid(animCtx);
-        drawGrid(pathCtx);
-    </script>
+  btnPause.addEventListener('click', ()=>{
+    paused = !paused;
+    btnPause.innerHTML = paused ? '▶' : '⏸';
+    btnPause.title = paused ? 'Retomar' : 'Pausar';
+  });
+
+  btnReset.addEventListener('click', ()=>{
+    // Parar simulação
+    if(playTimer) clearTimeout(playTimer);
+    playing = false;
+    paused = false;
+    btnPause.innerHTML = '⏸';
+    
+    // Reset camera
+    controls.reset();
+    if(currentExoType === 'arm') {
+      camera.position.set(0.7,0.5,1.2);
+      controls.target.set(0.25, 0.05, 0);
+    } else {
+      camera.position.set(0.7,0.7,1.2);
+      controls.target.set(0.25, 0.3, 0);
+    }
+    controls.update();
+    
+    // Reset pose
+    updateArmPose(parseFloat(t1i.value), parseFloat(t2i.value));
+    document.getElementById('frameInfo').innerText = 'Pronto';
+  });
+
+  cbObs.addEventListener('change', ()=>{ 
+    obstacleMesh.visible = cbObs.checked; 
+  });
+  
+  cbGrid.addEventListener('change', ()=>{ 
+    gridHelper.visible = cbGrid.checked; 
+  });
+
+  exportBtn.addEventListener('click', ()=>{
+    if(!frames || frames.length===0){ 
+      alert('📊 Nenhuma trajetória disponível!\n\nExecute uma simulação primeiro para gerar dados para exportação.'); 
+      return; 
+    }
+    
+    // CSV header com metadata
+    const timestamp = new Date().toISOString().replace(/:/g,'-').split('.')[0];
+    const exoTypeName = currentExoType === 'arm' ? 'braco' : 'perna';
+    
+    let csv = `# ExoRehab 3D - Trajetoria de Exoesqueleto\n`;
+    csv += `# Tipo: ${currentExoType === 'arm' ? 'Braço (Membro Superior)' : 'Perna (Membro Inferior)'}\n`;
+    csv += `# Gerado em: ${new Date().toLocaleString('pt-BR')}\n`;
+    csv += `# Total de frames: ${frames.length}\n`;
+    csv += `# Algoritmo: ${mode.value === 'astar' ? 'A* (Otimizado)' : 'Interpolação Linear'}\n`;
+    csv += `#\n`;
+    csv += `frame,theta1_deg,theta2_deg,theta1_rad,theta2_rad\n`;
+    
+    for(let i=0;i<frames.length;i++){
+      const t1_deg = frames[i][0];
+      const t2_deg = frames[i][1];
+      const t1_rad = degToRad(t1_deg);
+      const t2_rad = degToRad(t2_deg);
+      csv += `${i+1},${t1_deg.toFixed(4)},${t2_deg.toFixed(4)},${t1_rad.toFixed(6)},${t2_rad.toFixed(6)}\n`;
+    }
+    
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); 
+    a.href = url; 
+    a.download = `exorehab_${exoTypeName}_${timestamp}.csv`; 
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    // Feedback visual
+    const originalText = exportBtn.innerHTML;
+    exportBtn.innerHTML = '✓ Exportado!';
+    exportBtn.style.background = '#059669';
+    setTimeout(() => {
+      exportBtn.innerHTML = originalText;
+      exportBtn.style.background = '';
+    }, 2000);
+  });
+  
+  // Inicializar
+  updateLabels('arm');
+  
+  // Definir pose inicial após construir exoesqueleto
+  setTimeout(() => {
+    updateArmPose(20, -20);
+    document.getElementById('curT1').innerText = '20.0°';
+    document.getElementById('curT2').innerText = '-20.0°';
+  }, 100);
+})();
+
+// Aguardar carregamento do DOM e Three.js
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', startSimulator);
+} else {
+  startSimulator();
+}
+
+function startSimulator() {
+  // Verificar se THREE está carregado
+  if (typeof THREE === 'undefined') {
+    console.error('Three.js não carregado!');
+    setTimeout(startSimulator, 100);
+    return;
+  }
+  
+  // Inicializar a cena e começar renderização
+  initScene();
+  render();
+}
+
+</script>
 </body>
 </html>
